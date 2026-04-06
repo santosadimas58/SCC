@@ -6,7 +6,6 @@ use App\Models\Teacher as TeacherModel;
 #[Layout('layouts.app')]
 class Teacher extends Component
 {
-    public $teachers;
     public $showModal = false;
     public $editMode = false;
     public $teacherId;
@@ -17,14 +16,13 @@ class Teacher extends Component
     public $mata_pelajaran = '';
     public $status = 'Aktif';
 
-    public function mount()
-    {
-        $this->loadTeachers();
-    }
+    public $search = '';
+    public $filterStatus = '';
 
-    public function loadTeachers()
+    public function resetFilter()
     {
-        $this->teachers = TeacherModel::latest()->get();
+        $this->search = '';
+        $this->filterStatus = '';
     }
 
     public function openModal()
@@ -35,11 +33,7 @@ class Teacher extends Component
         $this->kode_guru = 'GRU-' . str_pad(TeacherModel::count() + 1, 3, '0', STR_PAD_LEFT);
     }
 
-    public function closeModal()
-    {
-        $this->showModal = false;
-        $this->resetFields();
-    }
+    public function closeModal() { $this->showModal = false; $this->resetFields(); }
 
     public function resetFields()
     {
@@ -80,9 +74,7 @@ class Teacher extends Component
             ]);
             $this->dispatch('mary-toast', toast: ['type' => 'success', 'title' => 'Berhasil!', 'description' => 'Data guru berhasil ditambahkan.', 'position' => 'toast-top toast-end', 'icon' => '', 'css' => 'alert-success', 'timeout' => 3000, 'noProgress' => false]);
         }
-
         $this->closeModal();
-        $this->loadTeachers();
     }
 
     public function edit($id)
@@ -103,11 +95,19 @@ class Teacher extends Component
     {
         TeacherModel::find($id)->delete();
         $this->dispatch('mary-toast', toast: ['type' => 'error', 'title' => 'Dihapus!', 'description' => 'Data guru berhasil dihapus.', 'position' => 'toast-top toast-end', 'icon' => '', 'css' => 'alert-error', 'timeout' => 3000, 'noProgress' => false]);
-        $this->loadTeachers();
     }
 
     public function render()
     {
-        return view('livewire.pages.program.teacher');
+        $teachers = TeacherModel::query()
+            ->when($this->search, fn($q) => $q->where('nama', 'like', '%'.$this->search.'%')
+                ->orWhere('kode_guru', 'like', '%'.$this->search.'%')
+                ->orWhere('email', 'like', '%'.$this->search.'%')
+                ->orWhere('mata_pelajaran', 'like', '%'.$this->search.'%'))
+            ->when($this->filterStatus, fn($q) => $q->where('status', $this->filterStatus))
+            ->latest()
+            ->get();
+
+        return view('livewire.pages.program.teacher', compact('teachers'));
     }
 }

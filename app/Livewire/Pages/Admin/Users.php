@@ -8,8 +8,6 @@ use Illuminate\Support\Facades\Hash;
 #[Layout('layouts.app')]
 class Users extends Component
 {
-    public $users;
-    public $roles;
     public $showModal = false;
     public $editMode = false;
     public $userId;
@@ -18,15 +16,13 @@ class Users extends Component
     public $password = '';
     public $selectedRole = '';
 
-    public function mount()
-    {
-        $this->loadUsers();
-        $this->roles = Role::all();
-    }
+    public $search = '';
+    public $filterRole = '';
 
-    public function loadUsers()
+    public function resetFilter()
     {
-        $this->users = User::with('roles')->get();
+        $this->search = '';
+        $this->filterRole = '';
     }
 
     public function openModal()
@@ -36,11 +32,7 @@ class Users extends Component
         $this->showModal = true;
     }
 
-    public function closeModal()
-    {
-        $this->showModal = false;
-        $this->resetFields();
-    }
+    public function closeModal() { $this->showModal = false; $this->resetFields(); }
 
     public function resetFields()
     {
@@ -81,7 +73,6 @@ class Users extends Component
 
         $user->syncRoles([$this->selectedRole]);
         $this->closeModal();
-        $this->loadUsers();
     }
 
     public function edit($id)
@@ -103,11 +94,20 @@ class Users extends Component
         }
         User::find($id)->delete();
         $this->dispatch('mary-toast', toast: ['type' => 'error', 'title' => 'Dihapus!', 'description' => 'User berhasil dihapus.', 'position' => 'toast-top toast-end', 'icon' => '', 'css' => 'alert-error', 'timeout' => 3000, 'noProgress' => false]);
-        $this->loadUsers();
     }
 
     public function render()
     {
-        return view('livewire.pages.admin.users');
+        $users = User::with('roles')
+            ->when($this->search, fn($q) => $q->where('name', 'like', '%'.$this->search.'%')
+                ->orWhere('email', 'like', '%'.$this->search.'%'))
+            ->when($this->filterRole, fn($q) => $q->whereHas('roles', fn($r) => $r->where('name', $this->filterRole)))
+            ->latest()
+            ->get();
+
+        $roles = Role::all();
+        $roleOptions = $roles->map(fn($r) => ['id' => $r->name, 'name' => ucfirst($r->name)])->toArray();
+
+        return view('livewire.pages.admin.users', compact('users', 'roles', 'roleOptions'));
     }
 }

@@ -5,11 +5,34 @@
         </x-slot:actions>
     </x-header>
 
+    {{-- Search & Filter --}}
+    <div class="flex flex-wrap gap-3 mb-4 items-center">
+        <x-input
+            placeholder="Cari nama, kode, email, mata pelajaran..."
+            wire:model.live.debounce.300ms="search"
+            icon="o-magnifying-glass"
+            class="flex-1 min-w-[200px]"
+        />
+        <x-select
+            placeholder="Semua Status"
+            wire:model.live="filterStatus"
+            :options="[
+                ['id' => 'Aktif',    'name' => 'Aktif'],
+                ['id' => 'Nonaktif', 'name' => 'Nonaktif'],
+            ]"
+            class="w-40"
+        />
+        @if($search || $filterStatus)
+        <x-button label="Reset" wire:click="resetFilter" class="btn-ghost btn-sm" icon="o-x-mark" />
+        @endif
+    </div>
+
     <x-card>
         <div class="overflow-x-auto">
             <table class="table table-zebra w-full">
                 <thead>
                     <tr>
+                        <th>#</th>
                         <th>Kode</th>
                         <th>Nama</th>
                         <th>Email</th>
@@ -20,58 +43,81 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($teachers as $teacher)
+                    @forelse($teachers as $i => $teacher)
                     <tr>
-                        <td>{{ $teacher->kode_guru }}</td>
-                        <td>
-                            <div class="flex items-center gap-2">
-                                <x-avatar :placeholder="strtoupper(substr($teacher->nama, 0, 1))" class="w-8 h-8" />
-                                {{ $teacher->nama }}
-                            </div>
-                        </td>
-                        <td>{{ $teacher->email }}</td>
+                        <td>{{ $i + 1 }}</td>
+                        <td><span class="font-mono text-sm">{{ $teacher->kode_guru }}</span></td>
+                        <td class="font-medium">{{ $teacher->nama }}</td>
+                        <td class="text-sm">{{ $teacher->email }}</td>
                         <td>{{ $teacher->no_hp ?? '-' }}</td>
-                        <td>{{ $teacher->mata_pelajaran ?? '-' }}</td>
                         <td>
-                            <x-badge :value="$teacher->status" class="{{ $teacher->status === 'Aktif' ? 'badge-success' : 'badge-error' }}" />
+                            @if($teacher->mata_pelajaran)
+                                <x-badge :value="$teacher->mata_pelajaran" class="badge-outline" />
+                            @else
+                                <span class="text-gray-400">-</span>
+                            @endif
+                        </td>
+                        <td>
+                            <x-badge
+                                :value="$teacher->status"
+                                class="{{ $teacher->status === 'Aktif' ? 'badge-success' : 'badge-error' }}"
+                            />
                         </td>
                         <td class="flex gap-2">
                             <x-button label="Edit" wire:click="edit({{ $teacher->id }})" class="btn-sm btn-info" icon="o-pencil" />
-                            <x-button label="Hapus" wire:click="delete({{ $teacher->id }})" wire:confirm="Yakin ingin menghapus?" class="btn-sm btn-error" icon="o-trash" />
+                            <x-button label="Hapus" wire:click="delete({{ $teacher->id }})" wire:confirm="Yakin ingin menghapus data guru ini?" class="btn-sm btn-error" icon="o-trash" />
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="text-center py-8">
+                        <td colspan="8" class="text-center py-8">
                             <x-icon name="o-academic-cap" class="w-12 h-12 mx-auto opacity-30 mb-2" />
-                            <p class="opacity-50">Belum ada data guru.</p>
+                            <p class="opacity-50">{{ $search || $filterStatus ? 'Tidak ada hasil yang cocok.' : 'Belum ada data guru.' }}</p>
                         </td>
                     </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
+
+        @if($teachers->count() > 0)
+        <div class="text-sm text-gray-400 mt-3">
+            Menampilkan {{ $teachers->count() }} guru
+        </div>
+        @endif
     </x-card>
 
-    <x-modal wire:model="showModal" title="{{ $editMode ? 'Edit Guru' : 'Tambah Guru Baru' }}">
-        <x-input label="Kode Guru" wire:model="kode_guru" disabled />
-        <x-input label="Nama" wire:model="nama" placeholder="Masukkan nama guru" class="mt-3" />
-        @error('nama') <span class="text-error text-xs">{{ $message }}</span> @enderror
-
-        <x-input label="Email" wire:model="email" type="email" placeholder="Masukkan email" class="mt-3" />
-        @error('email') <span class="text-error text-xs">{{ $message }}</span> @enderror
-
-        <x-input label="No. HP" wire:model="no_hp" placeholder="Masukkan no. HP" class="mt-3" />
-        <x-input label="Mata Pelajaran" wire:model="mata_pelajaran" placeholder="Masukkan mata pelajaran" class="mt-3" />
-
-        <x-select label="Status" wire:model="status" class="mt-3" :options="[
-            ['id' => 'Aktif', 'name' => 'Aktif'],
-            ['id' => 'Nonaktif', 'name' => 'Nonaktif'],
-        ]" />
-
+    {{-- Modal --}}
+    <x-modal wire:model="showModal" :title="$editMode ? 'Edit Guru' : 'Tambah Guru Baru'" separator>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <x-input
+                label="Kode Guru"
+                wire:model="kode_guru"
+                disabled
+                class="bg-base-200"
+            />
+            <x-select
+                label="Status"
+                wire:model="status"
+                :options="[
+                    ['id' => 'Aktif',    'name' => 'Aktif'],
+                    ['id' => 'Nonaktif', 'name' => 'Nonaktif'],
+                ]"
+            />
+            <div class="md:col-span-2">
+                <x-input label="Nama Guru" wire:model="nama" placeholder="Masukkan nama lengkap guru" />
+                @error('nama') <span class="text-error text-xs mt-1">{{ $message }}</span> @enderror
+            </div>
+            <div class="md:col-span-2">
+                <x-input label="Email" wire:model="email" type="email" placeholder="Masukkan email guru" />
+                @error('email') <span class="text-error text-xs mt-1">{{ $message }}</span> @enderror
+            </div>
+            <x-input label="No. HP" wire:model="no_hp" placeholder="Contoh: 08123456789" />
+            <x-input label="Mata Pelajaran" wire:model="mata_pelajaran" placeholder="Contoh: Matematika" />
+        </div>
         <x-slot:actions>
             <x-button label="Batal" wire:click="closeModal" icon="o-x-mark" />
-            <x-button label="Simpan" wire:click="save" class="btn-primary" icon="o-check" />
+            <x-button :label="$editMode ? 'Update' : 'Simpan'" wire:click="save" class="btn-primary" icon="o-check" />
         </x-slot:actions>
     </x-modal>
 </div>

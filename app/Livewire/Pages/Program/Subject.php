@@ -6,7 +6,6 @@ use App\Models\Subject as SubjectModel;
 #[Layout('layouts.app')]
 class Subject extends Component
 {
-    public $subjects;
     public $showModal = false;
     public $editMode = false;
     public $subjectId;
@@ -16,8 +15,16 @@ class Subject extends Component
     public $sks = 2;
     public $status = 'Aktif';
 
-    public function mount() { $this->loadSubjects(); }
-    public function loadSubjects() { $this->subjects = SubjectModel::latest()->get(); }
+    public $search = '';
+    public $filterStatus = '';
+    public $filterKategori = '';
+
+    public function resetFilter()
+    {
+        $this->search = '';
+        $this->filterStatus = '';
+        $this->filterKategori = '';
+    }
 
     public function openModal()
     {
@@ -66,7 +73,6 @@ class Subject extends Component
             $this->dispatch('mary-toast', toast: ['type' => 'success', 'title' => 'Berhasil!', 'description' => 'Mata pelajaran berhasil ditambahkan.', 'position' => 'toast-top toast-end', 'icon' => '', 'css' => 'alert-success', 'timeout' => 3000, 'noProgress' => false]);
         }
         $this->closeModal();
-        $this->loadSubjects();
     }
 
     public function edit($id)
@@ -86,8 +92,20 @@ class Subject extends Component
     {
         SubjectModel::find($id)->delete();
         $this->dispatch('mary-toast', toast: ['type' => 'error', 'title' => 'Dihapus!', 'description' => 'Mata pelajaran berhasil dihapus.', 'position' => 'toast-top toast-end', 'icon' => '', 'css' => 'alert-error', 'timeout' => 3000, 'noProgress' => false]);
-        $this->loadSubjects();
     }
 
-    public function render() { return view('livewire.pages.program.subject'); }
+    public function render()
+    {
+        $subjects = SubjectModel::query()
+            ->when($this->search, fn($q) => $q->where('nama_mapel', 'like', '%'.$this->search.'%')
+                ->orWhere('kode_mapel', 'like', '%'.$this->search.'%'))
+            ->when($this->filterStatus, fn($q) => $q->where('status', $this->filterStatus))
+            ->when($this->filterKategori, fn($q) => $q->where('kategori', 'like', '%'.$this->filterKategori.'%'))
+            ->latest()
+            ->get();
+
+        $kategoris = SubjectModel::whereNotNull('kategori')->where('kategori', '!=', '')->distinct()->pluck('kategori')->map(fn($k) => ['id' => $k, 'name' => $k])->values()->toArray();
+
+        return view('livewire.pages.program.subject', compact('subjects', 'kategoris'));
+    }
 }

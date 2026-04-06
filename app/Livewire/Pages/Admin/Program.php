@@ -2,11 +2,13 @@
 namespace App\Livewire\Pages\Admin;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
+use Livewire\WithPagination;
 use App\Models\Program as ProgramModel;
 #[Layout('layouts.app')]
 class Program extends Component
 {
-    public $programs;
+    use WithPagination;
+
     public $showModal = false;
     public $editMode = false;
     public $programId;
@@ -15,15 +17,21 @@ class Program extends Component
     public $deskripsi = '';
     public $jalur = '';
     public $status = 'Pending';
+    public $perPage = 10;
+    public $search = '';
+    public $filterStatus = '';
+    public $filterJalur = '';
 
-    public function mount()
-    {
-        $this->loadPrograms();
-    }
+    public function updatedSearch() { $this->resetPage(); }
+    public function updatedFilterStatus() { $this->resetPage(); }
+    public function updatedFilterJalur() { $this->resetPage(); }
 
-    public function loadPrograms()
+    public function resetFilter()
     {
-        $this->programs = ProgramModel::latest()->get();
+        $this->search = '';
+        $this->filterStatus = '';
+        $this->filterJalur = '';
+        $this->resetPage();
     }
 
     public function openModal()
@@ -34,11 +42,7 @@ class Program extends Component
         $this->kode_program = 'PRG-' . str_pad(ProgramModel::count() + 1, 3, '0', STR_PAD_LEFT);
     }
 
-    public function closeModal()
-    {
-        $this->showModal = false;
-        $this->resetFields();
-    }
+    public function closeModal() { $this->showModal = false; $this->resetFields(); }
 
     public function resetFields()
     {
@@ -76,9 +80,8 @@ class Program extends Component
             ]);
             $this->dispatch('mary-toast', toast: ['type' => 'success', 'title' => 'Berhasil!', 'description' => 'Program berhasil ditambahkan.', 'position' => 'toast-top toast-end', 'icon' => '', 'css' => 'alert-success', 'timeout' => 3000, 'noProgress' => false]);
         }
-
         $this->closeModal();
-        $this->loadPrograms();
+        $this->resetPage();
     }
 
     public function edit($id)
@@ -98,11 +101,19 @@ class Program extends Component
     {
         ProgramModel::find($id)->delete();
         $this->dispatch('mary-toast', toast: ['type' => 'error', 'title' => 'Dihapus!', 'description' => 'Program berhasil dihapus.', 'position' => 'toast-top toast-end', 'icon' => '', 'css' => 'alert-error', 'timeout' => 3000, 'noProgress' => false]);
-        $this->loadPrograms();
+        $this->resetPage();
     }
 
     public function render()
     {
-        return view('livewire.pages.admin.program');
+        $programs = ProgramModel::query()
+            ->when($this->search, fn($q) => $q->where('nama_program', 'like', '%'.$this->search.'%')
+                ->orWhere('kode_program', 'like', '%'.$this->search.'%'))
+            ->when($this->filterStatus, fn($q) => $q->where('status', $this->filterStatus))
+            ->when($this->filterJalur, fn($q) => $q->where('jalur', $this->filterJalur))
+            ->latest()
+            ->paginate($this->perPage);
+
+        return view('livewire.pages.admin.program', compact('programs'));
     }
 }
