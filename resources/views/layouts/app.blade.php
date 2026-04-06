@@ -8,10 +8,15 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen font-sans antialiased bg-base-200">
-    {{-- NAVBAR mobile only --}}
     <x-nav sticky class="lg:hidden">
         <x-slot:brand>
-            <x-app-brand />
+            @php
+                $homeUrl = auth()->check() ? (auth()->user()->hasRole('admin') ? '/admin/dashboard' : '/user/dashboard') : '/';
+            @endphp
+            <a href="{{ $homeUrl }}" class="flex items-center gap-2 px-2">
+                <x-icon name="o-sparkles" class="w-7 h-7 text-primary" />
+                <span class="font-black text-lg">{{ config('app.name') }}</span>
+            </a>
         </x-slot:brand>
         <x-slot:actions>
             <label for="main-drawer" class="lg:hidden me-3">
@@ -21,9 +26,15 @@
     </x-nav>
 
     <x-main>
-        {{-- SIDEBAR --}}
         <x-slot:sidebar drawer="main-drawer" collapsible class="bg-base-100 lg:bg-inherit">
-            <x-app-brand class="px-5 pt-4" />
+            {{-- BRAND --}}
+            @php
+                $homeUrl = auth()->check() ? (auth()->user()->hasRole('admin') ? '/admin/dashboard' : '/user/dashboard') : '/';
+            @endphp
+            <a href="{{ $homeUrl }}" class="flex items-center gap-2 px-5 pt-4 pb-2">
+                <x-icon name="o-sparkles" class="w-7 h-7 text-primary" />
+                <span class="font-black text-lg">{{ config('app.name') }}</span>
+            </a>
 
             <x-menu activate-by-route>
                 @if($user = auth()->user())
@@ -36,21 +47,18 @@
                     <x-menu-separator />
                 @endif
 
-                {{-- Home --}}
                 @if(auth()->check() && auth()->user()->hasRole('admin'))
                     <x-menu-item title="Home" icon="o-home" link="/admin/dashboard" />
                 @else
                     <x-menu-item title="Home" icon="o-home" link="/user/dashboard" />
                 @endif
 
-                {{-- Admin Menu --}}
                 @role('admin')
                     <x-menu-item title="Users" icon="o-users" link="/admin/users" />
                     <x-menu-item title="Program" icon="o-archive-box" link="/admin/program" />
                     <x-menu-item title="Inventory" icon="o-cube" link="/admin/inventory" />
                 @endrole
 
-                {{-- Program Menu --}}
                 @role('program')
                     <x-menu-separator />
                     <x-menu-item title="Teacher" icon="o-academic-cap" link="/program/teacher" />
