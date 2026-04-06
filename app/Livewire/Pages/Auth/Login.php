@@ -12,13 +12,14 @@ class Login extends Component
             'email' => 'required|email',
             'password' => 'required|min:6',
         ]);
-        if (Auth::attempt(['email' => $this->email, 'password' => $this->password])) {
-            $user = Auth::user();
-            if ($user->hasRole('admin')) {
-                return redirect()->route('admin.dashboard');
-            }
-            return redirect()->route('user.dashboard');
-        }
+	if (Auth::attempt(['email' => $this->email, 'password' => $this->password])) {
+    session()->regenerate();
+    $user = Auth::user();
+    if ($user->hasRole('admin')) {
+        return redirect()->route('scc.dashboard');
+    }
+    return redirect()->route('scc.dashboard');
+}
         $this->addError('email', 'Invalid credentials');
     }
     public function render()

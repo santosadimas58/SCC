@@ -55,3 +55,30 @@ input[type="password"]::placeholder,
 input[type="text"]::placeholder {
     color: #999999 !important;
 }
+
+/* Fix input text color for dark mode */
+.input, .textarea, .select {
+    color: oklch(var(--bc));
+    background-color: oklch(var(--b2));
+}
+
+input::placeholder, textarea::placeholder {
+    color: oklch(var(--bc) / 0.4);
+}
+
+/* Force input colors follow DaisyUI theme */
+input, textarea, select {
+    color-scheme: light dark;
+    color: inherit !important;
+    background-color: oklch(var(--b2)) !important;
+}
+
+input::placeholder, textarea::placeholder {
+    color: inherit !important;
+    opacity: 0.5;
+}
+
+option {
+    background-color: oklch(var(--b2)) !important;
+    color: inherit !important;
+}
