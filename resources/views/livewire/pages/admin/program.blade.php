@@ -1,11 +1,18 @@
-<div class="p-6">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold">Program</h1>
-        <x-button label="+ Tambah Program Baru" wire:click="openModal" class="btn-primary" />
-    </div>
+<div class="scc-page">
+    <section class="scc-page-hero">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+                <div class="scc-eyebrow">Program Catalog</div>
+                <h1 class="mt-3 text-3xl font-semibold text-white">Program</h1>
+                <p class="mt-2 text-sm text-slate-300">Katalog program akademik dibawa ke struktur visual yang sama dengan dashboard, inventory, dan monitoring.</p>
+            </div>
+            <x-button label="+ Tambah Program Baru" wire:click="openModal" class="btn-primary border-0" />
+        </div>
+    </section>
 
-    <div class="overflow-x-auto rounded-lg shadow">
-        <table class="table table-zebra w-full">
+    <x-card>
+        <div class="scc-table-wrap overflow-x-auto">
+            <table class="table table-zebra w-full">
             <thead>
                 <tr>
                     <th>Kode</th>
@@ -33,12 +40,15 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" class="text-center py-4">Belum ada data program.</td>
+                    <td colspan="5" class="py-6">
+                        <div class="scc-empty">Belum ada data program.</div>
+                    </td>
                 </tr>
                 @endforelse
             </tbody>
-        </table>
-    </div>
+            </table>
+        </div>
+    </x-card>
 
     <x-modal wire:model="showModal" title="{{ $editMode ? 'Edit Program' : 'Tambah Program Baru' }}">
         <x-input label="Kode Program" wire:model="kode_program" disabled />

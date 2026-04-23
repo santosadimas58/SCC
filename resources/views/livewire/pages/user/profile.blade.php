@@ -1,10 +1,14 @@
-<div>
-    <x-header title="Profil Saya" subtitle="Kelola informasi akun Anda" separator />
+<div class="scc-page">
+    <section class="scc-page-hero">
+        <div class="scc-eyebrow">Account Settings</div>
+        <h1 class="mt-3 text-3xl font-semibold text-white">Profil Saya</h1>
+        <p class="mt-2 text-sm text-slate-300">Kelola identitas akun dan keamanan akses dalam layout yang lebih bersih dan konsisten dengan keseluruhan aplikasi.</p>
+    </section>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
 
         {{-- Info Card --}}
-        <div class="bg-base-100 rounded-xl shadow p-6 flex flex-col items-center text-center">
+        <div class="card flex flex-col items-center p-6 text-center">
             <div class="w-24 h-24 rounded-full bg-primary flex items-center justify-center mb-4">
                 <span class="text-4xl font-bold text-primary-content">
                     {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}

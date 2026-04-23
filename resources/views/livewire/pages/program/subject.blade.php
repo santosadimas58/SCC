@@ -1,12 +1,16 @@
-<div>
-    <x-header title="Mata Pelajaran" subtitle="Manajemen data mata pelajaran" separator>
-        <x-slot:actions>
-            <x-button label="+ Tambah Mapel" wire:click="openModal" class="btn-primary" icon="o-plus" />
-        </x-slot:actions>
-    </x-header>
+<div class="scc-page">
+    <section class="scc-page-hero">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+                <div class="scc-eyebrow">Academic Data</div>
+                <h1 class="mt-3 text-3xl font-semibold text-white">Mata Pelajaran</h1>
+                <p class="mt-2 text-sm text-slate-300">Halaman mata pelajaran disederhanakan ke pola toolbar, table, dan modal yang konsisten.</p>
+            </div>
+            <x-button label="+ Tambah Mapel" wire:click="openModal" class="btn-primary border-0" icon="o-plus" />
+        </div>
+    </section>
 
-    {{-- Search & Filter --}}
-    <div class="flex flex-wrap gap-3 mb-4 items-center">
+    <div class="scc-toolbar">
         <x-input
             placeholder="Cari kode atau nama mapel..."
             wire:model.live.debounce.300ms="search"
@@ -34,7 +38,7 @@
     </div>
 
     <x-card>
-        <div class="overflow-x-auto">
+        <div class="scc-table-wrap overflow-x-auto">
             <table class="table table-zebra w-full">
                 <thead>
                     <tr>

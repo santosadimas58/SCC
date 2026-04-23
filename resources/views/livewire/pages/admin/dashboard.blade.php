@@ -1,8 +1,12 @@
-<div>
-    <x-header title="Admin Dashboard" subtitle="Selamat datang, {{ auth()->user()->name }}!" separator />
+<div class="scc-page">
+    <section class="scc-page-hero">
+        <div class="scc-eyebrow">Admin Workspace</div>
+        <h1 class="mt-3 text-3xl font-semibold text-white">Admin Dashboard</h1>
+        <p class="mt-2 text-sm text-slate-300">Ringkasan pengguna, data akademik, dan aktivitas terbaru dalam tampilan dark modern yang konsisten dengan modul SCC.</p>
+    </section>
 
     {{-- Stats Row 1: Core --}}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+    <div class="scc-grid-stats">
         <x-card>
             <div class="flex items-center gap-3">
                 <div class="p-3 bg-primary/10 rounded-lg">
@@ -50,7 +54,7 @@
     </div>
 
     {{-- Stats Row 2: Academic --}}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="scc-grid-stats">
         <x-card>
             <div class="flex items-center gap-3">
                 <div class="p-3 bg-success/10 rounded-lg">
@@ -98,11 +102,11 @@
     </div>
 
     {{-- Recent Data --}}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
         {{-- Recent Users --}}
         <x-card title="User Terbaru" icon="o-user-plus">
             @forelse($recentUsers as $user)
-            <div class="flex items-center justify-between py-2 border-b border-base-200 last:border-0">
+            <div class="scc-list-row">
                 <div class="flex items-center gap-3">
                     <div class="avatar placeholder">
                         <div class="bg-primary text-primary-content rounded-full w-8">
@@ -122,7 +126,7 @@
                 </div>
             </div>
             @empty
-            <p class="text-center opacity-40 py-4 text-sm">Belum ada user.</p>
+            <div class="scc-empty text-sm">Belum ada user.</div>
             @endforelse
             <div class="mt-3">
                 <a href="/admin/users">
@@ -134,7 +138,7 @@
         {{-- Recent Programs --}}
         <x-card title="Program Terbaru" icon="o-archive-box">
             @forelse($recentPrograms as $program)
-            <div class="flex items-center justify-between py-2 border-b border-base-200 last:border-0">
+            <div class="scc-list-row">
                 <div>
                     <p class="font-medium text-sm">{{ $program->nama_program }}</p>
                     <p class="text-xs opacity-50">{{ $program->kode_program }} · {{ $program->jalur ?? '-' }}</p>
@@ -148,7 +152,7 @@
                 />
             </div>
             @empty
-            <p class="text-center opacity-40 py-4 text-sm">Belum ada program.</p>
+            <div class="scc-empty text-sm">Belum ada program.</div>
             @endforelse
             <div class="mt-3">
                 <a href="/admin/program">

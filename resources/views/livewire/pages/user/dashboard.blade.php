@@ -1,8 +1,12 @@
-<div>
-    <x-header title="Dashboard" subtitle="Selamat datang, {{ auth()->user()->name }}!" separator />
+<div class="scc-page">
+    <section class="scc-page-hero">
+        <div class="scc-eyebrow">Personal Workspace</div>
+        <h1 class="mt-3 text-3xl font-semibold text-white">Dashboard</h1>
+        <p class="mt-2 text-sm text-slate-300">Ringkasan aktivitas akademik pribadi dengan kartu statistik, akses cepat, dan panel informasi yang lebih profesional.</p>
+    </section>
 
     {{-- Stats Cards --}}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="scc-grid-stats">
         <x-card>
             <div class="flex items-center gap-3">
                 <div class="p-3 bg-primary/10 rounded-lg">
@@ -49,7 +53,7 @@
         </x-card>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
         {{-- Profil --}}
         <x-card title="Profil Saya" icon="o-user">
             <div class="flex items-center gap-4">
@@ -85,21 +89,21 @@
         </x-card>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
         {{-- Jadwal Hari Ini --}}
         <x-card title="Jadwal Hari Ini" icon="o-clock">
             @forelse($todaySchedules as $schedule)
-            <div class="flex items-center justify-between py-2 border-b border-base-200 last:border-0">
+            <div class="scc-list-row">
                 <div>
                     <p class="font-medium text-sm">{{ $schedule->mata_pelajaran }}</p>
                     <p class="text-xs opacity-50">{{ $schedule->guru }} · {{ $schedule->ruangan ?? '-' }}</p>
                 </div>
-                <span class="text-xs font-mono bg-base-200 px-2 py-1 rounded">
+                <span class="text-xs font-mono bg-base-200 px-2 py-1 rounded-xl">
                     {{ \Carbon\Carbon::parse($schedule->jam_mulai)->format('H:i') }} - {{ \Carbon\Carbon::parse($schedule->jam_selesai)->format('H:i') }}
                 </span>
             </div>
             @empty
-            <div class="text-center py-4 opacity-40">
+            <div class="scc-empty">
                 <x-icon name="o-calendar" class="w-8 h-8 mx-auto mb-1" />
                 <p class="text-sm">Tidak ada jadwal hari ini</p>
             </div>
@@ -109,7 +113,7 @@
         {{-- Tugas Mendatang --}}
         <x-card title="Tugas Mendatang" icon="o-clipboard-document-list">
             @forelse($upcomingAssignments as $assignment)
-            <div class="flex items-center justify-between py-2 border-b border-base-200 last:border-0">
+            <div class="scc-list-row">
                 <div>
                     <p class="font-medium text-sm">{{ $assignment->judul }}</p>
                     <p class="text-xs opacity-50">{{ $assignment->mata_pelajaran }}</p>
@@ -122,7 +126,7 @@
                 </div>
             </div>
             @empty
-            <div class="text-center py-4 opacity-40">
+            <div class="scc-empty">
                 <x-icon name="o-clipboard-document" class="w-8 h-8 mx-auto mb-1" />
                 <p class="text-sm">Tidak ada tugas mendatang</p>
             </div>

@@ -1,11 +1,18 @@
-<div class="p-6">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold">Inventory</h1>
-        <x-button label="+ Tambah Barang" wire:click="openModal" class="btn-primary" />
-    </div>
+<div class="scc-page">
+    <section class="scc-page-hero">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+                <div class="scc-eyebrow">Asset Tracking</div>
+                <h1 class="mt-3 text-3xl font-semibold text-white">Inventory</h1>
+                <p class="mt-2 text-sm text-slate-300">Daftar inventaris ditampilkan dalam panel gelap yang lebih rapi untuk kebutuhan operasional dan audit.</p>
+            </div>
+            <x-button label="+ Tambah Barang" wire:click="openModal" class="btn-primary border-0" />
+        </div>
+    </section>
 
-    <div class="overflow-x-auto rounded-lg shadow">
-        <table class="table table-zebra w-full">
+    <x-card>
+        <div class="scc-table-wrap overflow-x-auto">
+            <table class="table table-zebra w-full">
             <thead>
                 <tr>
                     <th>Kode</th>
@@ -37,12 +44,15 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="text-center py-4">Belum ada data inventory.</td>
+                    <td colspan="7" class="py-6">
+                        <div class="scc-empty">Belum ada data inventory.</div>
+                    </td>
                 </tr>
                 @endforelse
             </tbody>
-        </table>
-    </div>
+            </table>
+        </div>
+    </x-card>
 
     <x-modal wire:model="showModal" title="{{ $editMode ? 'Edit Barang' : 'Tambah Barang Baru' }}">
         <x-input label="Kode Barang" wire:model="kode_barang" disabled />

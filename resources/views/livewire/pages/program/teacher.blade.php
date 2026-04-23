@@ -1,12 +1,16 @@
-<div>
-    <x-header title="Data Guru" subtitle="Manajemen data guru" separator>
-        <x-slot:actions>
-            <x-button label="+ Tambah Guru" wire:click="openModal" class="btn-primary" icon="o-plus" />
-        </x-slot:actions>
-    </x-header>
+<div class="scc-page">
+    <section class="scc-page-hero">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+                <div class="scc-eyebrow">Academic Data</div>
+                <h1 class="mt-3 text-3xl font-semibold text-white">Data Guru</h1>
+                <p class="mt-2 text-sm text-slate-300">Manajemen data guru menggunakan struktur halaman, toolbar, dan table surface yang seragam.</p>
+            </div>
+            <x-button label="+ Tambah Guru" wire:click="openModal" class="btn-primary border-0" icon="o-plus" />
+        </div>
+    </section>
 
-    {{-- Search & Filter --}}
-    <div class="flex flex-wrap gap-3 mb-4 items-center">
+    <div class="scc-toolbar">
         <x-input
             placeholder="Cari nama, kode, email, mata pelajaran..."
             wire:model.live.debounce.300ms="search"
@@ -28,7 +32,7 @@
     </div>
 
     <x-card>
-        <div class="overflow-x-auto">
+        <div class="scc-table-wrap overflow-x-auto">
             <table class="table table-zebra w-full">
                 <thead>
                     <tr>

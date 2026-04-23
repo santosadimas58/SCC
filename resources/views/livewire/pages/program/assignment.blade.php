@@ -1,12 +1,16 @@
-<div>
-    <x-header title="Tugas" subtitle="Manajemen data tugas" separator>
-        <x-slot:actions>
-            <x-button label="+ Tambah Tugas" wire:click="openModal" class="btn-primary" icon="o-plus" />
-        </x-slot:actions>
-    </x-header>
+<div class="scc-page">
+    <section class="scc-page-hero">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+                <div class="scc-eyebrow">Task Tracking</div>
+                <h1 class="mt-3 text-3xl font-semibold text-white">Tugas</h1>
+                <p class="mt-2 text-sm text-slate-300">Daftar tugas, deadline, dan status kini tampil dalam panel yang lebih rapi dan konsisten.</p>
+            </div>
+            <x-button label="+ Tambah Tugas" wire:click="openModal" class="btn-primary border-0" icon="o-plus" />
+        </div>
+    </section>
 
-    {{-- Search & Filter --}}
-    <div class="flex flex-wrap gap-3 mb-4 items-center">
+    <div class="scc-toolbar">
         <x-input
             placeholder="Cari judul, mata pelajaran..."
             wire:model.live.debounce.300ms="search"
@@ -29,7 +33,7 @@
     </div>
 
     <x-card>
-        <div class="overflow-x-auto">
+        <div class="scc-table-wrap overflow-x-auto">
             <table class="table table-zebra w-full">
                 <thead>
                     <tr>

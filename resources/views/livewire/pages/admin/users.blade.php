@@ -1,11 +1,16 @@
-<div>
-    <x-header title="Manajemen User" subtitle="Kelola user dan role" separator>
-        <x-slot:actions>
-            <x-button label="+ Tambah User" wire:click="openModal" class="btn-primary" icon="o-plus" />
-        </x-slot:actions>
-    </x-header>
+<div class="scc-page">
+    <section class="scc-page-hero">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+                <div class="scc-eyebrow">User Access</div>
+                <h1 class="mt-3 text-3xl font-semibold text-white">Manajemen User</h1>
+                <p class="mt-2 text-sm text-slate-300">Kelola akun dan role melalui panel administrasi yang lebih rapi dan konsisten.</p>
+            </div>
+            <x-button label="+ Tambah User" wire:click="openModal" class="btn-primary border-0" icon="o-plus" />
+        </div>
+    </section>
 
-    <div class="flex flex-wrap gap-3 mb-4 items-center">
+    <div class="scc-toolbar">
         <x-input
             placeholder="Cari nama atau email..."
             wire:model.live.debounce.300ms="search"
@@ -24,7 +29,7 @@
     </div>
 
     <x-card>
-        <div class="overflow-x-auto">
+        <div class="scc-table-wrap overflow-x-auto">
             <table class="table table-zebra w-full">
                 <thead>
                     <tr>
