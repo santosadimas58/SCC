@@ -9,16 +9,14 @@ services:
   nginx:
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "8088:80"
 
-  # --- UBAH KE MYSQL ---
   mysql:
     restart: unless-stopped
     ports:
-      - "3311:3306" # Akses dari DBeaver/Laptop pakai port 3307
-  # ---------------------
+      - "3313:3306"
 
   redis:
     restart: unless-stopped
     ports:
-      - "6381:6379"
+      - "6383:6379"

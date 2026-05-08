@@ -39,6 +39,7 @@
                     ['id' => 'Bulk', 'name' => 'Bulk'],
                     ['id' => 'Absorption', 'name' => 'Absorption'],
                     ['id' => 'Float', 'name' => 'Float'],
+                    ['id' => 'Standby', 'name' => 'Standby'],
                 ]"
             />
             <x-input label="Tanggal Mulai" wire:model.live="startDate" type="date" />
@@ -76,7 +77,7 @@
                         <td>{{ number_format($row->soc, 1) }}</td>
                         <td>{{ number_format($row->duty_cycle, 1) }}</td>
                         <td>
-                            <span class="badge badge-sm {{ $row->fase == 'Bulk' ? 'badge-error' : ($row->fase == 'Absorption' ? 'badge-warning' : 'badge-success') }}">
+                            <span class="badge badge-sm {{ $row->fase == 'Bulk' ? 'badge-error' : ($row->fase == 'Absorption' ? 'badge-warning' : ($row->fase == 'Float' ? 'badge-success' : 'badge-info')) }}">
                                 {{ $row->fase }}
                             </span>
                         </td>

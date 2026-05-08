@@ -4,25 +4,38 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\SccData;
+use App\Services\Scc\FuzzyChargeController;
 use Illuminate\Http\Request;
 
 class SccController extends Controller
 {
-    public function store(Request $request)
+    public function store(Request $request, FuzzyChargeController $controller)
     {
+        if (! $this->hasValidToken($request)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid SCC API token.',
+            ], 401);
+        }
+
         $validated = $request->validate([
             'vpv'        => 'required|numeric',
             'ipv'        => 'required|numeric',
             'vbat'       => 'required|numeric',
             'ibat'       => 'required|numeric',
             'soc'        => 'required|numeric',
-            'duty_cycle' => 'required|numeric',
-            'fase'       => 'required|string',
-            'label_e'    => 'required|string',
-            'label_de'   => 'required|string',
+            'duty_cycle' => 'sometimes|numeric',
+            'fase'       => 'sometimes|string',
+            'label_e'    => 'sometimes|string',
+            'label_de'   => 'sometimes|string',
         ]);
 
-        $data = SccData::create($validated);
+        $latest = SccData::latest()->first();
+        $previousError = $latest
+            ? $this->targetVoltage($latest->fase, $latest->vbat) - $latest->vbat
+            : null;
+
+        $data = SccData::create($controller->evaluate($validated, $previousError));
 
         return response()->json([
             'success' => true,
@@ -49,5 +62,26 @@ class SccController extends Controller
             'data'    => $data,
         ]);
     }
-}
 
+    private function hasValidToken(Request $request): bool
+    {
+        $token = config('services.scc.api_token');
+
+        if (blank($token)) {
+            return app()->environment('local', 'testing');
+        }
+
+        $providedToken = $request->bearerToken() ?: $request->header('X-SCC-Token');
+
+        return is_string($providedToken) && hash_equals($token, $providedToken);
+    }
+
+    private function targetVoltage(string $phase, float $vbat): float
+    {
+        return match ($phase) {
+            'Bulk', 'Absorption' => FuzzyChargeController::BULK_TARGET,
+            'Float' => FuzzyChargeController::FLOAT_TARGET,
+            default => $vbat,
+        };
+    }
+}

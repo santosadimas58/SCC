@@ -42,13 +42,6 @@
                 </thead>
                 <tbody>
                     @php
-                    $rules = [
-                        'NB' => ['NB'=>'PB','NS'=>'PB','ZO'=>'PB','PS'=>'PS','PB'=>'ZO'],
-                        'NS' => ['NB'=>'PB','NS'=>'PS','ZO'=>'PS','PS'=>'ZO','PB'=>'NS'],
-                        'ZO' => ['NB'=>'PS','NS'=>'PS','ZO'=>'ZO','PS'=>'NS','PB'=>'NS'],
-                        'PS' => ['NB'=>'PS','NS'=>'ZO','ZO'=>'NS','PS'=>'NS','PB'=>'NB'],
-                        'PB' => ['NB'=>'ZO','NS'=>'NS','ZO'=>'NB','PS'=>'NB','PB'=>'NB'],
-                    ];
                     $colors = ['NB'=>'badge-error','NS'=>'badge-warning','ZO'=>'badge-info','PS'=>'badge-warning','PB'=>'badge-success'];
                     @endphp
                     @foreach($rules as $e => $row)
@@ -65,7 +58,7 @@
             </table>
         </div>
         <div class="mt-4 text-xs text-gray-400">
-            Metode Inferensi: Mamdani | Defuzzifikasi: Centroid of Area (CoA)
+            Metode: fuzzy rule-based dengan output duty cycle diskrit
         </div>
     </x-card>
 </div>
