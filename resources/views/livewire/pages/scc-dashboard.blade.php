@@ -93,52 +93,87 @@
             </div>
         </x-card>
 
-        <x-card title="Kontrol Charging" shadow>
-            <div class="scc-control-stack">
-                <div class="scc-phase-timeline scc-phase-timeline-compact">
-                    @foreach($phaseTimeline as $phase)
-                        <div class="scc-phase-step scc-phase-{{ $phase['state'] }}">
-                            <div class="scc-phase-marker">
-                                @if($phase['state'] === 'completed')
-                                    <x-icon name="o-check" class="h-4 w-4" />
-                                @else
-                                    {{ $loop->iteration }}
-                                @endif
+        <div class="scc-control-stack">
+            <x-card title="Kontrol Charging" shadow>
+                <div class="scc-control-stack">
+                    <div class="scc-phase-timeline scc-phase-timeline-compact">
+                        @foreach($phaseTimeline as $phase)
+                            <div class="scc-phase-step scc-phase-{{ $phase['state'] }}">
+                                <div class="scc-phase-marker">
+                                    @if($phase['state'] === 'completed')
+                                        <x-icon name="o-check" class="h-4 w-4" />
+                                    @else
+                                        {{ $loop->iteration }}
+                                    @endif
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="scc-phase-title">{{ $phase['name'] }}</div>
+                                    <div class="scc-phase-state">{{ $phase['state'] === 'active' ? 'Aktif' : ($phase['state'] === 'completed' ? 'Terlewati' : 'Menunggu') }}</div>
+                                </div>
                             </div>
-                            <div class="min-w-0">
-                                <div class="scc-phase-title">{{ $phase['name'] }}</div>
-                                <div class="scc-phase-state">{{ $phase['state'] === 'active' ? 'Aktif' : ($phase['state'] === 'completed' ? 'Terlewati' : 'Menunggu') }}</div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
+                        @endforeach
+                    </div>
 
-                <div class="scc-fuzzy-decision scc-fuzzy-decision-compact">
-                    <div class="scc-fuzzy-rule">
-                        <div class="scc-fuzzy-rule-label">Keputusan pengisian saat ini</div>
-                        <div class="scc-fuzzy-rule-text">{{ $fuzzyDecision['rule_text'] ?? 'Belum ada keputusan pengisian aktif.' }}</div>
-                        <div class="mt-4 flex flex-wrap gap-2">
-                            <span class="scc-fuzzy-chip">Kondisi: {{ $fuzzyDecision['condition_text'] ?? '-' }}</span>
-                            <span class="scc-fuzzy-chip">Perubahan: {{ $fuzzyDecision['change_text'] ?? '-' }}</span>
-                            <span class="scc-fuzzy-chip">Aksi: {{ $fuzzyDecision['action_text'] ?? '-' }}</span>
-                        </div>
-                    </div>
-                    <div class="scc-fuzzy-output">
-                        <div>
-                            <div class="text-xs uppercase tracking-[0.22em] text-slate-500">Daya Pengisian</div>
-                            <div class="mt-2 text-4xl font-semibold text-white">
-                                {{ $fuzzyDecision['final_duty'] !== null ? number_format($fuzzyDecision['final_duty'], 1).' %' : '-' }}
+                    <div class="scc-fuzzy-decision scc-fuzzy-decision-compact">
+                        <div class="scc-fuzzy-rule">
+                            <div class="scc-fuzzy-rule-label">Keputusan pengisian saat ini</div>
+                            <div class="scc-fuzzy-rule-text">{{ $fuzzyDecision['rule_text'] ?? 'Belum ada keputusan pengisian aktif.' }}</div>
+                            <div class="mt-4 flex flex-wrap gap-2">
+                                <span class="scc-fuzzy-chip">Kondisi: {{ $fuzzyDecision['condition_text'] ?? '-' }}</span>
+                                <span class="scc-fuzzy-chip">Perubahan: {{ $fuzzyDecision['change_text'] ?? '-' }}</span>
+                                <span class="scc-fuzzy-chip">Aksi: {{ $fuzzyDecision['action_text'] ?? '-' }}</span>
                             </div>
-                            <div class="mt-2 text-sm text-slate-400">{{ $fuzzyDecision['phase_note'] ?? '-' }}</div>
                         </div>
-                        <div class="scc-fuzzy-output-base">
-                            <span>Acuan awal</span>
-                            <b>{{ $fuzzyDecision['base_output'] !== null ? number_format($fuzzyDecision['base_output'], 1).' %' : '-' }}</b>
+                        <div class="scc-fuzzy-output">
+                            <div>
+                                <div class="text-xs uppercase tracking-[0.22em] text-slate-500">Daya Pengisian</div>
+                                <div class="mt-2 text-4xl font-semibold text-white">
+                                    {{ $fuzzyDecision['final_duty'] !== null ? number_format($fuzzyDecision['final_duty'], 1).' %' : '-' }}
+                                </div>
+                                <div class="mt-2 text-sm text-slate-400">{{ $fuzzyDecision['phase_note'] ?? '-' }}</div>
+                            </div>
+                            <div class="scc-fuzzy-output-base">
+                                <span>Acuan awal</span>
+                                <b>{{ $fuzzyDecision['base_output'] !== null ? number_format($fuzzyDecision['base_output'], 1).' %' : '-' }}</b>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </x-card>
+            </x-card>
+
+            <x-card title="Kontrol Beban DC" shadow>
+                <div class="grid gap-4 md:grid-cols-[0.85fr_1.15fr]">
+                    <div class="rounded-2xl border border-white/10 bg-slate-950/35 p-5">
+                        <div class="text-xs uppercase tracking-[0.22em] text-slate-500">Beban Aktif</div>
+                        <div class="mt-2 text-2xl font-semibold text-white">{{ $loadManagement['load_name'] ?? '-' }}</div>
+                        <div class="scc-metric-state scc-metric-{{ $loadManagement['tone'] ?? 'unknown' }}">
+                            {{ $loadManagement['load_status'] ?? '-' }}
+                        </div>
+                    </div>
+                    <div class="scc-info-list text-sm">
+                        <div>
+                            <span class="text-gray-400">Daya beban</span>
+                            <span class="font-semibold text-white">{{ ($loadManagement['load_power'] ?? null) !== null ? number_format($loadManagement['load_power'], 1).' W' : '-' }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400">Arus beban</span>
+                            <span class="font-semibold text-white">{{ ($loadManagement['load_current'] ?? null) !== null ? number_format($loadManagement['load_current'], 3).' A' : '-' }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400">Net power</span>
+                            <span class="font-semibold text-white">{{ ($loadManagement['net_power'] ?? null) !== null ? number_format($loadManagement['net_power'], 1).' W' : '-' }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400">Estimasi</span>
+                            <span class="font-semibold text-white">{{ $loadManagement['energy_status'] ?? '-' }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-3 text-sm text-slate-300">
+                    {{ $loadManagement['load_reason'] ?? 'Menunggu data SCC terbaru.' }}
+                </div>
+            </x-card>
+        </div>
     </div>
 
     <x-card title="Cuaca Setiabudhi" shadow>
@@ -191,34 +226,11 @@
             </div>
 
             <div class="scc-weather-forecast">
-                <div class="mb-3 flex items-center justify-between gap-3">
-                    <div class="text-sm font-semibold text-white">Prakiraan berikutnya</div>
-                    <div class="text-xs text-slate-500">Update: {{ $weather['fetched_at'] ?? '-' }}</div>
+                <div class="text-sm font-semibold text-white">Konteks simulasi</div>
+                <div class="mt-2 rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-3 text-sm text-slate-300">
+                    BMKG memberi konteks cuaca untuk simulasi panel. Data aktual yang dipakai fuzzy tetap berupa Vpv, Ipv, Vbat, SoC, error, dan delta error.
                 </div>
-                <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                    @forelse(($weather['upcoming'] ?? []) as $forecast)
-                        <div class="scc-weather-slot scc-weather-{{ $forecast['tone'] ?? 'unknown' }}">
-                            <div class="text-xs text-slate-400">{{ $forecast['date'] }}</div>
-                            <div class="mt-1 text-lg font-semibold text-white">{{ $forecast['time'] }} WIB</div>
-                            <div class="mt-2 text-sm font-semibold text-white">{{ $forecast['weather'] }}</div>
-                            <div class="mt-3 flex items-center justify-between gap-3 text-sm">
-                                <span class="text-slate-400">Suhu</span>
-                                <b class="text-white">{{ $forecast['temperature'] !== null ? number_format($forecast['temperature'], 0).'°C' : '-' }}</b>
-                            </div>
-                            <div class="mt-2 flex items-center justify-between gap-3 text-sm">
-                                <span class="text-slate-400">Awan</span>
-                                <b class="text-white">{{ $forecast['cloud_cover'] !== null ? number_format($forecast['cloud_cover'], 0).' %' : '-' }}</b>
-                            </div>
-                        </div>
-                    @empty
-                        <div class="rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-3 text-sm text-slate-400">
-                            Belum ada prakiraan lanjutan.
-                        </div>
-                    @endforelse
-                </div>
-                <div class="mt-3 text-xs text-slate-500">
-                    Data prakiraan cuaca bersumber dari BMKG. Kode wilayah: {{ $weather['adm4'] ?? '32.73.08.1003' }}.
-                </div>
+                <div class="mt-3 text-xs text-slate-500">Update: {{ $weather['fetched_at'] ?? '-' }} · Kode wilayah: {{ $weather['adm4'] ?? '32.73.08.1003' }}</div>
             </div>
         </div>
     </x-card>
@@ -375,101 +387,28 @@
         </x-card>
     </div>
 
-    {{-- Grafik dengan wire:ignore agar tidak dihapus Livewire --}}
-    <div class="scc-chart-grid" wire:ignore>
-        <script type="application/json" id="scc-chart-bootstrap">
-            @json($chartBootstrap)
-        </script>
-        <x-card title="Grafik Tegangan Baterai" shadow>
-            <div class="scc-chart-frame">
-                <canvas id="chartVbat"></canvas>
+    <x-card title="Navigasi Detail" shadow>
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div class="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
+                <div class="text-sm font-semibold text-white">Real-time Data</div>
+                <div class="mt-2 text-sm text-slate-400">Pantau pembacaan terbaru dan status alat.</div>
+                <x-button label="Lihat Real-time Data" icon="o-signal" class="btn-outline btn-sm mt-4" link="/scc" />
             </div>
-        </x-card>
-        <x-card title="Grafik State of Charge" shadow>
-            <div class="scc-chart-frame">
-                <canvas id="chartSoc"></canvas>
+            <div class="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
+                <div class="text-sm font-semibold text-white">Riwayat Data</div>
+                <div class="mt-2 text-sm text-slate-400">Buka tabel lengkap, filter, dan data historis.</div>
+                <x-button label="Lihat Riwayat Data" icon="o-clock" class="btn-outline btn-sm mt-4" link="/scc/history" />
             </div>
-        </x-card>
-    </div>
-
-    <div class="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
-        <x-card title="Monitoring Real-Time" shadow>
-            <div class="mb-4 flex flex-wrap items-center gap-3">
-                <div class="scc-status-pill {{ $status['online'] ? 'scc-status-live' : 'scc-status-offline' }}">
-                    <span class="scc-status-dot"></span>
-                    {{ $status['online'] ? 'Live update aktif' : 'Data tidak diperbarui' }}
-                </div>
-                <div class="text-sm text-slate-400">Timestamp data terakhir: <span class="font-semibold text-white">{{ $status['last_update'] ?? '-' }}</span></div>
+            <div class="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
+                <div class="text-sm font-semibold text-white">Analisis Performa</div>
+                <div class="mt-2 text-sm text-slate-400">Lihat distribusi fase dan tren duty cycle.</div>
+                <x-button label="Lihat Analisis Performa" icon="o-presentation-chart-line" class="btn-outline btn-sm mt-4" link="/scc/analysis" />
             </div>
-
-            @unless($status['online'])
-                <div class="mb-4 rounded-2xl border border-red-400/15 bg-red-500/10 p-4 text-sm text-red-200">
-                    Data SCC tidak berubah selama {{ $status['freshness_label'] ?? '-' }}. Periksa koneksi mikrokontroler, sensor, atau endpoint data.
-                </div>
-            @endunless
-
-            <div class="scc-mini-grid">
-                @foreach($groupedMetrics as $group)
-                    <div class="scc-metric-panel">
-                        <div class="text-sm font-semibold text-white">{{ $group['title'] }}</div>
-                        @foreach($group['items'] as $item)
-                            <div class="scc-metric-item">
-                                <div class="scc-metric-label">{{ $item['label'] }}</div>
-                                <div class="scc-metric-value">{{ $item['value'] }}</div>
-                                <div class="scc-metric-range">{{ $item['range'] }}</div>
-                                <div class="scc-metric-state scc-metric-{{ $item['status'] }}">
-                                    {{ $item['status'] === 'normal' ? 'Normal' : ($item['status'] === 'warning' ? 'Warning' : ($item['status'] === 'critical' ? 'Critical' : 'Informasi')) }}
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                @endforeach
+            <div class="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
+                <div class="text-sm font-semibold text-white">Fuzzy Logic</div>
+                <div class="mt-2 text-sm text-slate-400">Pelajari input, output, dan rule fuzzy.</div>
+                <x-button label="Lihat Fuzzy Logic" icon="o-cpu-chip" class="btn-outline btn-sm mt-4" link="/scc/fuzzy" />
             </div>
-        </x-card>
-
-        <x-card title="Ringkasan Harian" shadow>
-            <div class="scc-info-list text-sm">
-                <div><span class="text-gray-400">Jumlah record hari ini</span><span class="font-semibold text-white">{{ $dailySummary['records'] }}</span></div>
-                <div><span class="text-gray-400">Rata-rata tegangan baterai</span><span class="font-semibold text-white">{{ $dailySummary['avg_vbat'] ? number_format($dailySummary['avg_vbat'], 2).' V' : '-' }}</span></div>
-                <div><span class="text-gray-400">Rata-rata SoC</span><span class="font-semibold text-white">{{ $dailySummary['avg_soc'] ? number_format($dailySummary['avg_soc'], 2).' %' : '-' }}</span></div>
-                <div><span class="text-gray-400">Daya panel maksimum</span><span class="font-semibold text-white">{{ $dailySummary['max_power'] ? number_format($dailySummary['max_power'], 2).' W' : '-' }}</span></div>
-                <div><span class="text-gray-400">Fase dominan</span><span class="font-semibold text-white">{{ $dailySummary['dominant_phase'] }}</span></div>
-            </div>
-        </x-card>
-    </div>
-
-    <x-card title="Histori Data (20 terakhir)" shadow>
-        <div class="scc-table-wrap overflow-x-auto">
-            <table class="table table-zebra w-full text-sm">
-                <thead>
-                    <tr>
-                        <th>Waktu</th>
-                        <th>Vbat (V)</th>
-                        <th>Vpv (V)</th>
-                        <th>Arus (A)</th>
-                        <th>SoC (%)</th>
-                        <th>Duty (%)</th>
-                        <th>Fase</th>
-                        <th>Fuzzy</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($history as $row)
-                    <tr>
-                        <td class="text-xs">{{ $row->created_at->format('H:i:s') }}</td>
-                        <td>{{ number_format($row->vbat, 1) }}</td>
-                        <td>{{ number_format($row->vpv, 1) }}</td>
-                        <td>{{ number_format($row->ibat, 2) }}</td>
-                        <td>{{ number_format($row->soc, 1) }}</td>
-                        <td>{{ number_format($row->duty_cycle, 1) }}</td>
-                        <td><span class="badge badge-sm {{ $row->fase == 'Bulk' ? 'badge-error' : ($row->fase == 'Absorption' ? 'badge-warning' : ($row->fase == 'Float' ? 'badge-success' : 'badge-info')) }}">{{ $row->fase }}</span></td>
-                        <td class="text-xs">{{ $row->label_e }}/{{ $row->label_de }}</td>
-                    </tr>
-                    @empty
-                    <tr><td colspan="8" class="text-center text-gray-400">Belum ada data</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
         </div>
     </x-card>
 

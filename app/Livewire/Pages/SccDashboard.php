@@ -6,23 +6,23 @@ use App\Models\SccData;
 use App\Services\Scc\SccDemoData;
 use App\Services\Scc\BmkgWeatherService;
 use App\Services\Scc\FuzzyChargeController;
+use App\Services\Scc\LoadManagementController;
 use App\Services\Scc\WeatherAwareSccSimulator;
 use Livewire\Component;
 
 class SccDashboard extends Component
 {
     public $latest;
-    public $history;
     public $status = [];
     public $dailySummary = [];
     public $groupedMetrics = [];
     public $performance = [];
     public $phaseTimeline = [];
-    public $chartBootstrap = [];
     public $fuzzyDecision = [];
     public $weather = [];
     public $simulation = [];
     public $weatherControlFlow = [];
+    public $loadManagement = [];
     public ?string $demoResetMessage = null;
 
     public function mount()
@@ -35,14 +35,13 @@ class SccDashboard extends Component
         $this->weather = app(BmkgWeatherService::class)->forecast();
         $this->simulation = $this->simulateFromWeatherIfNeeded($this->weather);
         $this->latest  = SccData::latest()->first();
-        $this->history = SccData::latest()->take(20)->get();
         $this->status = $this->buildStatus();
         $this->dailySummary = $this->buildDailySummary();
         $this->groupedMetrics = $this->buildGroupedMetrics();
         $this->performance = $this->buildPerformance();
         $this->phaseTimeline = $this->buildPhaseTimeline();
-        $this->chartBootstrap = $this->buildChartBootstrap();
         $this->fuzzyDecision = $this->buildFuzzyDecision();
+        $this->loadManagement = $this->buildLoadManagement();
         $this->weatherControlFlow = $this->buildWeatherControlFlow();
     }
 
@@ -302,19 +301,6 @@ class SccDashboard extends Component
             ->all();
     }
 
-    protected function buildChartBootstrap(): array
-    {
-        return $this->history
-            ->reverse()
-            ->values()
-            ->map(fn ($row) => [
-                'created_at' => $row->created_at?->toISOString(),
-                'vbat' => $row->vbat,
-                'soc' => $row->soc,
-            ])
-            ->all();
-    }
-
     protected function buildFuzzyDecision(): array
     {
         $latest = $this->latest;
@@ -387,6 +373,51 @@ class SccDashboard extends Component
                 ['label' => 'Daya panel', 'value' => $panelPower !== null ? number_format($panelPower, 1).' W' : '-'],
                 ['label' => 'Fuzzy', 'value' => $latest ? $latest->label_e.'/'.$latest->label_de : '-'],
             ],
+        ];
+    }
+
+    protected function buildLoadManagement(): array
+    {
+        $latest = $this->latest;
+
+        if (! $latest) {
+            return [
+                'available' => false,
+                'load_name' => '-',
+                'load_status' => '-',
+                'load_power' => null,
+                'load_current' => null,
+                'net_power' => null,
+                'energy_status' => '-',
+                'tone' => 'unknown',
+                'load_reason' => 'Menunggu data SCC terbaru.',
+            ];
+        }
+
+        $load = $latest->load_status
+            ? [
+                'load_name' => $latest->load_name,
+                'load_status' => $latest->load_status,
+                'load_power' => $latest->load_power,
+                'load_current' => $latest->load_current,
+                'net_power' => $latest->net_power,
+                'load_reason' => $latest->load_reason,
+            ]
+            : app(LoadManagementController::class)->evaluate($latest->toArray());
+
+        $netPower = $load['net_power'];
+        $status = $load['load_status'];
+
+        return [
+            'available' => true,
+            ...$load,
+            'energy_status' => $netPower >= 0.0 ? 'Surplus energi' : 'Defisit energi',
+            'tone' => match ($status) {
+                'ON' => 'normal',
+                'LIMITED' => 'warning',
+                'OFF' => 'critical',
+                default => 'unknown',
+            },
         ];
     }
 

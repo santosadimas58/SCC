@@ -5,11 +5,12 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\SccData;
 use App\Services\Scc\FuzzyChargeController;
+use App\Services\Scc\LoadManagementController;
 use Illuminate\Http\Request;
 
 class SccController extends Controller
 {
-    public function store(Request $request, FuzzyChargeController $controller)
+    public function store(Request $request, FuzzyChargeController $controller, LoadManagementController $loadController)
     {
         if (! $this->hasValidToken($request)) {
             return response()->json([
@@ -35,7 +36,11 @@ class SccController extends Controller
             ? $this->targetVoltage($latest->fase, $latest->vbat) - $latest->vbat
             : null;
 
-        $data = SccData::create($controller->evaluate($validated, $previousError));
+        $evaluated = $controller->evaluate($validated, $previousError);
+        $data = SccData::create([
+            ...$evaluated,
+            ...$loadController->evaluate($evaluated),
+        ]);
 
         return response()->json([
             'success' => true,

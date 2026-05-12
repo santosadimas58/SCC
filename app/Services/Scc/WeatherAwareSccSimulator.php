@@ -8,6 +8,7 @@ class WeatherAwareSccSimulator
 {
     public function __construct(
         private readonly FuzzyChargeController $controller,
+        private readonly LoadManagementController $loadController,
     ) {
     }
 
@@ -23,7 +24,12 @@ class WeatherAwareSccSimulator
             ? $this->targetForPhase($latest->fase, $latest->vbat) - $latest->vbat
             : null;
 
-        return SccData::create($this->controller->evaluate($payload, $previousError));
+        $evaluated = $this->controller->evaluate($payload, $previousError);
+
+        return SccData::create([
+            ...$evaluated,
+            ...$this->loadController->evaluate($evaluated),
+        ]);
     }
 
     private function payload(array $forecast, ?SccData $latest): array

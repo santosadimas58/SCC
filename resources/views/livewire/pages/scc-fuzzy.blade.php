@@ -11,6 +11,7 @@
             <span>Cuaca/BMKG memengaruhi simulasi <b>Vpv</b> dan <b>Ipv</b>, bukan menjadi input fuzzy langsung.</span>
         </div>
         <div class="mt-2 text-sm text-slate-400">Keputusan fuzzy tetap berbasis error, delta error, dan kondisi charging, lalu dipetakan sebagai <b>fuzzy rule-based dengan output duty cycle diskrit</b>.</div>
+        <div class="mt-2 text-sm text-slate-400">Load Management DC adalah simulasi proteksi beban berbasis <b>SoC</b> dan kondisi daya panel. Bagian ini tidak mengubah rule fuzzy charging dan belum mengontrol hardware asli.</div>
     </div>
 
     @php
@@ -80,6 +81,7 @@
             <div class="space-y-3 text-sm">
                 <p>Sistem ini menggunakan <b>fuzzy rule-based dengan output duty cycle diskrit</b>. Output fuzzy berupa label keputusan duty cycle seperti NB, NS, ZO, PS, dan PB yang dipetakan ke nilai PWM tertentu.</p>
                 <p>Nilai duty cycle PWM menentukan besar kecilnya aksi buck converter, sedangkan mode charging menunjukkan konteks operasinya: <b>Bulk</b>, <b>Absorption</b>, <b>Float</b>, atau <b>Standby</b>.</p>
+                <p>Kontrol beban DC berada di luar fuzzy charging. Status <b>ON</b>, <b>LIMITED</b>, atau <b>OFF</b> ditentukan oleh proteksi sederhana dari SoC baterai dan kecukupan daya panel.</p>
                 <p>Dengan output diskrit, keputusan sistem tetap mudah dijelaskan saat demo: duty dinaikkan, ditahan, diturunkan, atau dimatikan saat panel tidak cukup.</p>
             </div>
         </x-card>

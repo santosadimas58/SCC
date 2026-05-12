@@ -43,6 +43,18 @@
                             <div class="scc-architecture-copy">Vbat, Ibat, dan SoC</div>
                         </div>
                     </div>
+                    <div class="scc-architecture-connector">
+                        <span>→</span>
+                    </div>
+                    <div class="scc-architecture-node">
+                        <div class="scc-architecture-icon bg-cyan-500/15 text-cyan-200">
+                            <x-icon name="o-light-bulb" class="h-6 w-6" />
+                        </div>
+                        <div>
+                            <div class="scc-architecture-title">Beban DC Kecil</div>
+                            <div class="scc-architecture-copy">Lampu DC / kipas DC simulasi</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -118,6 +130,7 @@
             <div class="space-y-3 text-sm">
                 <p>Panel surya menjadi sumber energi utama yang dihubungkan ke baterai melalui <b>buck converter</b>. Mikrokontroler membaca parameter listrik utama seperti tegangan panel, arus panel, tegangan baterai, arus baterai, state of charge, dan duty cycle PWM.</p>
                 <p>Alur kendalinya adalah <b>cuaca / intensitas matahari</b> memengaruhi <b>Vpv</b> dan <b>Ipv</b> panel, lalu fuzzy membaca kondisi charging dari error tegangan dan perubahan error. Setelah itu duty cycle PWM disesuaikan agar output ke baterai lebih aman dan stabil.</p>
+                <p>Setelah baterai, sistem juga mensimulasikan pemakaian energi ke <b>beban DC kecil</b> seperti lampu DC atau kipas DC. Kontrol beban ini dipakai untuk menunjukkan proteksi low battery dan estimasi surplus atau defisit energi.</p>
             </div>
         </x-card>
 
@@ -212,6 +225,8 @@
                 <div><span class="text-gray-400">Duty cycle PWM</span><span class="font-bold">Duty Cycle</span></div>
                 <div><span class="text-gray-400">Fase charging</span><span class="font-bold">Bulk / Absorption / Float / Standby</span></div>
                 <div><span class="text-gray-400">Label fuzzy</span><span class="font-bold">e dan de</span></div>
+                <div><span class="text-gray-400">Kontrol beban DC</span><span class="font-bold">ON / LIMITED / OFF</span></div>
+                <div><span class="text-gray-400">Net power</span><span class="font-bold">Panel - Beban</span></div>
             </div>
         </x-card>
 
@@ -224,8 +239,8 @@
 
         <x-card title="Arsitektur Sistem" shadow>
             <div class="space-y-3 text-sm">
-                <p><b>Panel Surya</b> mengisi <b>baterai</b> melalui <b>buck converter</b> yang dikendalikan PWM. <b>ESP32</b> membaca sensor, menghitung parameter fuzzy, lalu mengirim data ke backend Laravel melalui API.</p>
-                <p>Laravel menyimpan data ke database, sedangkan Livewire dan Blade menampilkan hubungan antara daya panel, kondisi baterai, keputusan fuzzy, histori, analisis performa, dan export dataset.</p>
+                <p><b>Panel Surya</b> mengisi <b>baterai</b> melalui <b>buck converter</b> yang dikendalikan PWM. Baterai kemudian disimulasikan menyuplai <b>beban DC kecil</b> dengan proteksi sederhana berbasis SoC dan daya panel.</p>
+                <p><b>ESP32</b> membaca sensor, menghitung parameter fuzzy, lalu mengirim data ke backend Laravel melalui API. Laravel menyimpan data, sedangkan Livewire dan Blade menampilkan hubungan antara daya panel, kondisi baterai, keputusan fuzzy, load management, histori, analisis performa, dan export dataset.</p>
             </div>
         </x-card>
 

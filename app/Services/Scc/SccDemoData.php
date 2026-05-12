@@ -9,6 +9,7 @@ class SccDemoData
 {
     public function __construct(
         private readonly FuzzyChargeController $controller,
+        private readonly LoadManagementController $loadController,
     ) {
     }
 
@@ -40,6 +41,7 @@ class SccDemoData
 
             $rows[] = [
                 ...$evaluated,
+                ...$this->loadController->evaluate($evaluated),
                 'created_at' => $createdAt,
                 'updated_at' => $createdAt,
             ];
