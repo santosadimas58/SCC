@@ -1,304 +1,278 @@
-<div class="scc-page">
-    <section class="scc-page-hero">
-        <div class="scc-eyebrow">Realtime Overview</div>
-        <div class="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-                <h1 class="text-3xl font-semibold text-white">SCC Monitoring Dashboard</h1>
-                <p class="mt-2 max-w-2xl text-sm text-slate-300">Pantau kesehatan charging system, fase pengisian, dan performa kontrol fuzzy dalam satu dashboard yang rapi dan mudah dibaca.</p>
-            </div>
-            <div class="flex flex-wrap items-center gap-3">
-                <div class="scc-status-pill {{ $status['online'] ? 'scc-status-online' : 'scc-status-offline' }}">
-                    <span class="scc-status-dot"></span>
-                    Status alat {{ $status['label'] }}
-                </div>
-                <div class="scc-soft-surface px-4 py-3 text-sm">
-                    <div class="text-slate-400">Update terakhir</div>
-                    <div class="mt-1 font-semibold text-white">{{ $status['last_update'] ?? 'Belum ada data' }}</div>
-                </div>
-            </div>
+<div class="scc-page scc-dashboard-clean">
+    @php
+        $statusLabels = [
+            'normal' => 'Normal',
+            'warning' => 'Warning',
+            'critical' => 'Critical',
+            'info' => 'Info',
+            'unknown' => 'Unknown',
+        ];
+
+        $socValue = $latest ? min(100, max(0, $latest->soc)) : 0;
+        $metricCards = [
+            [
+                'label' => 'State of Charge',
+                'value' => $latest ? number_format($latest->soc, 1).'%' : '-',
+                'hint' => 'Kapasitas baterai',
+                'icon' => 'o-battery-100',
+                'tone' => $performance['soc_status'] ?? 'unknown',
+            ],
+            [
+                'label' => 'Tegangan Baterai',
+                'value' => $latest ? number_format($latest->vbat, 1).' V' : '-',
+                'hint' => 'Target fase '.$status['charging_mode'],
+                'icon' => 'o-battery-50',
+                'tone' => $groupedMetrics[1]['items'][0]['status'] ?? 'unknown',
+            ],
+            [
+                'label' => 'Daya Panel',
+                'value' => $performance['panel_power'] !== null ? number_format($performance['panel_power'], 1).' W' : '-',
+                'hint' => 'Vpv x Ipv',
+                'icon' => 'o-sun',
+                'tone' => $performance['panel_power_status'] ?? 'unknown',
+            ],
+            [
+                'label' => 'Duty Cycle PWM',
+                'value' => $latest ? number_format($latest->duty_cycle, 1).'%' : '-',
+                'hint' => 'Output Mamdani',
+                'icon' => 'o-cpu-chip',
+                'tone' => $groupedMetrics[2]['items'][0]['status'] ?? 'unknown',
+            ],
+        ];
+    @endphp
+
+    <section class="scc-clean-hero">
+        <div>
+            <div class="scc-eyebrow">Solar Charge Controller</div>
+            <h1 class="mt-2 text-3xl font-semibold text-white md:text-4xl">SCC Monitoring Dashboard</h1>
+            <p class="mt-2 max-w-2xl text-sm text-slate-300">
+                Ringkasan charging, keputusan fuzzy Mamdani, cuaca simulasi, dan kondisi beban dalam satu layar presentasi.
+            </p>
         </div>
-        <div class="mt-5 grid gap-4 md:grid-cols-3">
-            <div class="scc-hero-stat">
-                <div class="text-xs uppercase tracking-[0.24em] text-slate-500">Mode Charging</div>
-                <div class="mt-2 text-2xl font-semibold text-white">{{ $status['charging_mode'] }}</div>
-                <div class="mt-1 text-sm text-slate-400">Mode aktif berdasarkan fase pengisian terakhir.</div>
+
+        <div class="scc-clean-hero-actions">
+            <span class="scc-fuzzy-chip">Demo Mode</span>
+            <div class="scc-status-pill {{ $status['online'] ? 'scc-status-online' : 'scc-status-offline' }}">
+                <span class="scc-status-dot"></span>
+                Status: {{ $status['label'] }}
             </div>
-            <div class="scc-hero-stat">
-                <div class="text-xs uppercase tracking-[0.24em] text-slate-500">Freshness Data</div>
-                <div class="mt-2 text-2xl font-semibold text-white">
-                    {{ $status['seconds_since_update'] !== null ? $status['seconds_since_update'].' dtk' : '-' }}
-                </div>
-                <div class="mt-1 text-sm text-slate-400">{{ $status['message'] }}</div>
-            </div>
-            <div class="scc-hero-stat">
-                <div class="text-xs uppercase tracking-[0.24em] text-slate-500">Ringkasan Harian</div>
-                <div class="mt-2 text-2xl font-semibold text-white">{{ $dailySummary['records'] }} record</div>
-                <div class="mt-1 text-sm text-slate-400">Dominan fase {{ $dailySummary['dominant_phase'] }} hari ini.</div>
-            </div>
+            <x-button
+                label="Reset Demo"
+                icon="o-arrow-path"
+                class="btn-outline btn-sm"
+                wire:click="resetDemoData"
+                wire:confirm="Reset demo akan menghapus seluruh data SCC dan mengisi ulang dataset presentasi. Lanjutkan?"
+            />
         </div>
     </section>
 
-    <div class="scc-grid-stats">
-        <x-card shadow class="scc-stat-card">
-            <div class="flex items-center gap-3">
-                <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/10">
-                    <x-icon name="o-battery-100" class="w-8 h-8 text-success" />
+    @if($demoResetMessage)
+        <div class="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+            {{ $demoResetMessage }}
+        </div>
+    @endif
+
+    <div class="scc-clean-metrics">
+        @foreach($metricCards as $metric)
+            <div class="scc-clean-metric scc-clean-metric-{{ $metric['tone'] }}">
+                <div class="scc-clean-metric-icon">
+                    <x-icon name="{{ $metric['icon'] }}" class="h-6 w-6" />
                 </div>
-                <div>
-                    <div class="text-xs text-gray-400">Tegangan Baterai</div>
-                    <div class="scc-stat-value text-success">{{ $latest ? number_format($latest->vbat, 1).' V' : '-' }}</div>
-                    <div class="mt-1 text-xs text-slate-500">Ideal 11.8 - 14.4 V</div>
+                <div class="min-w-0">
+                    <div class="text-sm text-slate-400">{{ $metric['label'] }}</div>
+                    <div class="mt-2 text-3xl font-semibold text-white">{{ $metric['value'] }}</div>
+                    <div class="mt-2 flex flex-wrap items-center gap-2">
+                        <span class="scc-metric-state scc-metric-{{ $metric['tone'] }}">{{ $statusLabels[$metric['tone']] ?? ucfirst($metric['tone']) }}</span>
+                        <span class="text-xs text-slate-500">{{ $metric['hint'] }}</span>
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    </div>
+
+    <div class="scc-clean-main">
+        <x-card title="Kondisi Baterai" shadow>
+            <div class="scc-clean-battery">
+                <div class="scc-soc-gauge scc-soc-{{ $performance['soc_status'] ?? 'unknown' }}" style="--soc: {{ $socValue }}%;">
+                    <div class="scc-soc-gauge-inner">
+                        <div class="text-4xl font-semibold text-white">{{ $latest ? number_format($latest->soc, 1) : '-' }}%</div>
+                        <div class="text-sm text-slate-400">SoC</div>
+                    </div>
+                </div>
+
+                <div class="scc-clean-list">
+                    <div>
+                        <span>Status</span>
+                        <b class="scc-metric-state scc-metric-{{ $performance['soc_status'] ?? 'unknown' }}">{{ $statusLabels[$performance['soc_status'] ?? 'unknown'] }}</b>
+                    </div>
+                    <div>
+                        <span>Fase Pengisian</span>
+                        <b>{{ $status['charging_mode'] }}</b>
+                    </div>
+                    <div>
+                        <span>Daya Baterai</span>
+                        <b>{{ $performance['battery_power'] !== null ? number_format($performance['battery_power'], 1).' W' : '-' }}</b>
+                    </div>
+                    <div>
+                        <span>Update Terakhir</span>
+                        <b>{{ $status['last_update'] ?? '-' }}</b>
+                    </div>
                 </div>
             </div>
         </x-card>
-        <x-card shadow class="scc-stat-card">
-            <div class="flex items-center gap-3">
-                <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-500/10">
-                    <x-icon name="o-sun" class="w-8 h-8 text-warning" />
-                </div>
+
+        <x-card title="Keputusan Fuzzy Mamdani Saat Ini" shadow>
+            <div class="scc-clean-fuzzy">
                 <div>
-                    <div class="text-xs text-gray-400">Tegangan Panel</div>
-                    <div class="scc-stat-value text-warning">{{ $latest ? number_format($latest->vpv, 1).' V' : '-' }}</div>
-                    <div class="mt-1 text-xs text-slate-500">Ideal 17.0 - 22.0 V</div>
+                    <div class="scc-fuzzy-rule-label">Inferensi charging</div>
+                    <div class="scc-clean-fuzzy-copy">
+                        {{ $fuzzyDecision['rule_text'] ?? 'Belum ada keputusan pengisian aktif.' }}
+                    </div>
+
+                    <div class="mt-5 grid gap-3 md:grid-cols-3">
+                        <div class="scc-clean-chip-panel">
+                            <x-icon name="o-signal" class="h-5 w-5 text-sky-300" />
+                            <span>Kondisi</span>
+                            <b>{{ $fuzzyDecision['condition_text'] ?? '-' }}</b>
+                        </div>
+                        <div class="scc-clean-chip-panel">
+                            <x-icon name="o-arrow-trending-up" class="h-5 w-5 text-emerald-300" />
+                            <span>Perubahan</span>
+                            <b>{{ $fuzzyDecision['change_text'] ?? '-' }}</b>
+                        </div>
+                        <div class="scc-clean-chip-panel">
+                            <x-icon name="o-bolt" class="h-5 w-5 text-violet-300" />
+                            <span>Aksi</span>
+                            <b>{{ $fuzzyDecision['action_text'] ?? '-' }}</b>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </x-card>
-        <x-card shadow class="scc-stat-card">
-            <div class="flex items-center gap-3">
-                <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-500/10">
-                    <x-icon name="o-bolt" class="w-8 h-8 text-info" />
-                </div>
-                <div>
-                    <div class="text-xs text-gray-400">State of Charge</div>
-                    <div class="scc-stat-value text-info">{{ $latest ? number_format($latest->soc, 1).' %' : '-' }}</div>
-                    <div class="mt-1 text-xs text-slate-500">Ideal 50 - 100 %</div>
-                </div>
-            </div>
-        </x-card>
-        <x-card shadow class="scc-stat-card">
-            <div class="flex items-center gap-3">
-                <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/10">
-                    <x-icon name="o-cpu-chip" class="w-8 h-8 text-primary" />
-                </div>
-                <div>
-                    <div class="text-xs text-gray-400">Duty Cycle PWM</div>
-                    <div class="scc-stat-value text-primary">{{ $latest ? number_format($latest->duty_cycle, 1).' %' : '-' }}</div>
-                    <div class="mt-1 text-xs text-slate-500">Ideal 10 - 95 %</div>
+
+                <div class="scc-clean-duty">
+                    <div class="text-sm text-slate-400">Perintah PWM</div>
+                    <div class="mt-2 text-6xl font-semibold text-violet-300">
+                        {{ $fuzzyDecision['final_duty'] !== null ? number_format($fuzzyDecision['final_duty'], 1).'%' : '-' }}
+                    </div>
+                    <div class="scc-clean-duty-track">
+                        <div style="width: {{ $fuzzyDecision['final_duty'] !== null ? min(100, max(0, $fuzzyDecision['final_duty'])) : 0 }}%"></div>
+                    </div>
+                    <div class="mt-4 rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-3 text-sm text-slate-300">
+                        Fase charging aktif: <b class="text-sky-200">{{ $status['charging_mode'] }}</b>
+                    </div>
                 </div>
             </div>
         </x-card>
     </div>
 
-    @if($latest)
-    <x-card title="Status Pengisian" shadow>
-        <div class="flex flex-wrap items-center gap-4">
-            <x-badge :value="$latest->fase" class="{{ $latest->fase == 'Bulk' ? 'badge-error' : ($latest->fase == 'Absorption' ? 'badge-warning' : 'badge-success') }} badge-lg" />
-            <span class="text-sm"><span class="text-gray-400">Label Fuzzy:</span> <b>E = {{ $latest->label_e }}</b> | <b>dE = {{ $latest->label_de }}</b></span>
-            <span class="text-sm"><span class="text-gray-400">Arus Baterai:</span> <b>{{ number_format($latest->ibat, 2) }} A</b></span>
-            <span class="text-sm"><span class="text-gray-400">Daya Panel:</span> <b>{{ number_format($latest->vpv * $latest->ipv, 1) }} W</b></span>
-        </div>
-    </x-card>
-    @endif
-
-    <div class="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
-        <x-card title="Monitoring Real-Time" shadow>
-            <div class="mb-4 flex flex-wrap items-center gap-3">
-                <div class="scc-status-pill {{ $status['online'] ? 'scc-status-live' : 'scc-status-offline' }}">
-                    <span class="scc-status-dot"></span>
-                    {{ $status['online'] ? 'Live update aktif' : 'Data tidak diperbarui' }}
+    <div class="scc-clean-secondary">
+        <x-card title="Konteks Cuaca - Setiabudhi, Bandung" shadow>
+            <div class="scc-clean-weather">
+                <div class="flex items-center gap-4">
+                    <div class="scc-clean-weather-icon">
+                        <x-icon name="o-cloud" class="h-8 w-8" />
+                    </div>
+                    <div>
+                        <div class="text-4xl font-semibold text-white">
+                            {{ ($weather['available'] ?? false) && $weather['current']['temperature'] !== null ? number_format($weather['current']['temperature'], 0).'°C' : '-' }}
+                        </div>
+                        <div class="mt-1 text-sm font-semibold text-white">{{ $weather['current']['weather'] ?? 'Data BMKG belum tersedia' }}</div>
+                        <div class="mt-1 text-xs text-slate-500">Sumber: BMKG · {{ $weather['fetched_at'] ?? '-' }}</div>
+                    </div>
                 </div>
-                <div class="text-sm text-slate-400">Timestamp data terakhir: <span class="font-semibold text-white">{{ $status['last_update'] ?? '-' }}</span></div>
+
+                <div class="scc-clean-weather-grid">
+                    <div><span>Kelembapan</span><b>{{ ($weather['available'] ?? false) && $weather['current']['humidity'] !== null ? number_format($weather['current']['humidity'], 0).'%' : '-' }}</b></div>
+                    <div><span>Tutupan Awan</span><b>{{ ($weather['available'] ?? false) && $weather['current']['cloud_cover'] !== null ? number_format($weather['current']['cloud_cover'], 0).'%' : '-' }}</b></div>
+                    <div><span>Angin</span><b>{{ ($weather['available'] ?? false) && $weather['current']['wind_speed'] !== null ? number_format($weather['current']['wind_speed'], 1).' km/jam' : '-' }}</b></div>
+                    <div><span>Arah Angin</span><b>{{ $weather['current']['wind_direction'] ?? '-' }}</b></div>
+                </div>
+
+                <div class="rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-3 text-sm text-slate-300">
+                    {{ $weather['solar_note'] ?? 'Cuaca dipakai sebagai konteks simulasi panel, bukan input langsung fuzzy Mamdani.' }}
+                </div>
+            </div>
+        </x-card>
+
+        <x-card title="Alur Sistem" shadow>
+            <div class="scc-clean-flow">
+                <div class="scc-clean-flow-steps">
+                    <div>
+                        <span>1</span>
+                        <x-icon name="o-cloud" class="h-7 w-7 text-sky-300" />
+                        <b>Cuaca</b>
+                        <small>{{ $weatherControlFlow['weather_label'] ?? '-' }}</small>
+                    </div>
+                    <div>
+                        <span>2</span>
+                        <x-icon name="o-sun" class="h-7 w-7 text-amber-300" />
+                        <b>Panel</b>
+                        <small>{{ $performance['panel_power'] !== null ? number_format($performance['panel_power'], 1).' W' : '-' }}</small>
+                    </div>
+                    <div>
+                        <span>3</span>
+                        <x-icon name="o-cpu-chip" class="h-7 w-7 text-violet-300" />
+                        <b>Fuzzy</b>
+                        <small>PWM {{ $latest ? number_format($latest->duty_cycle, 1).'%' : '-' }}</small>
+                    </div>
+                    <div>
+                        <span>4</span>
+                        <x-icon name="o-battery-100" class="h-7 w-7 text-emerald-300" />
+                        <b>Baterai</b>
+                        <small>SoC {{ $latest ? number_format($latest->soc, 1).'%' : '-' }}</small>
+                    </div>
+                </div>
+
+                <div class="scc-clean-flow-summary">
+                    <div><span>Efisiensi Estimasi</span><b class="text-emerald-300">{{ $performance['efficiency'] !== null ? number_format($performance['efficiency'], 1).'%' : '-' }}</b></div>
+                    <div><span>Fase Charging</span><b class="text-sky-300">{{ $status['charging_mode'] }}</b></div>
+                    <div><span>Beban DC Aktif</span><b class="text-amber-300">{{ isset($loadManagement['load_power']) ? number_format($loadManagement['load_power'], 1).' W' : '-' }}</b></div>
+                </div>
+            </div>
+        </x-card>
+    </div>
+
+    <x-card title="Load Management DC" shadow>
+        <div class="scc-clean-load">
+            <div>
+                <div class="text-sm text-slate-400">Keputusan beban</div>
+                <div class="mt-2 text-2xl font-semibold text-white">{{ $loadManagement['load_name'] ?? '-' }}</div>
+                <div class="mt-3 flex flex-wrap gap-2">
+                    <span class="scc-metric-state scc-metric-{{ $loadManagement['tone'] ?? 'unknown' }}">{{ $loadManagement['load_status'] ?? '-' }}</span>
+                    <span class="scc-fuzzy-chip">Skor {{ isset($loadManagement['load_score']) ? number_format($loadManagement['load_score'], 1) : '-' }}</span>
+                    <span class="scc-fuzzy-chip">Net {{ isset($loadManagement['net_power']) ? number_format($loadManagement['net_power'], 1).' W' : '-' }}</span>
+                </div>
             </div>
 
-            @unless($status['online'])
-                <div class="mb-4 rounded-2xl border border-red-400/15 bg-red-500/10 p-4 text-sm text-red-200">
-                    Data SCC tidak berubah dalam {{ $status['seconds_since_update'] ?? '-' }} detik. Periksa koneksi mikrokontroler, sensor, atau endpoint data.
-                </div>
-            @endunless
-
-            <div class="scc-mini-grid">
-                @foreach($groupedMetrics as $group)
-                    <div class="scc-metric-panel">
-                        <div class="text-sm font-semibold text-white">{{ $group['title'] }}</div>
-                        @foreach($group['items'] as $item)
-                            <div class="scc-metric-item">
-                                <div class="scc-metric-label">{{ $item['label'] }}</div>
-                                <div class="scc-metric-value">{{ $item['value'] }}</div>
-                                <div class="scc-metric-range">{{ $item['range'] }}</div>
-                                <div class="scc-metric-state scc-metric-{{ $item['status'] }}">
-                                    {{ $item['status'] === 'normal' ? 'Normal' : ($item['status'] === 'warning' ? 'Warning' : ($item['status'] === 'critical' ? 'Critical' : 'Informasi')) }}
-                                </div>
-                            </div>
-                        @endforeach
+            <div class="scc-clean-load-items">
+                @foreach(($loadManagement['load_items'] ?? []) as $item)
+                    <div>
+                        <span>{{ $item['name'] }}</span>
+                        <b>{{ $item['load_status'] }}</b>
+                        <small>{{ number_format($item['load_power'], 1) }} W</small>
                     </div>
                 @endforeach
             </div>
-        </x-card>
-
-        <x-card title="Ringkasan Harian" shadow>
-            <div class="scc-info-list text-sm">
-                <div><span class="text-gray-400">Jumlah record hari ini</span><span class="font-semibold text-white">{{ $dailySummary['records'] }}</span></div>
-                <div><span class="text-gray-400">Rata-rata tegangan baterai</span><span class="font-semibold text-white">{{ $dailySummary['avg_vbat'] ? number_format($dailySummary['avg_vbat'], 2).' V' : '-' }}</span></div>
-                <div><span class="text-gray-400">Rata-rata SoC</span><span class="font-semibold text-white">{{ $dailySummary['avg_soc'] ? number_format($dailySummary['avg_soc'], 2).' %' : '-' }}</span></div>
-                <div><span class="text-gray-400">Daya panel maksimum</span><span class="font-semibold text-white">{{ $dailySummary['max_power'] ? number_format($dailySummary['max_power'], 2).' W' : '-' }}</span></div>
-                <div><span class="text-gray-400">Fase dominan</span><span class="font-semibold text-white">{{ $dailySummary['dominant_phase'] }}</span></div>
-            </div>
-        </x-card>
-    </div>
-
-    {{-- Grafik dengan wire:ignore agar tidak dihapus Livewire --}}
-    <div class="grid grid-cols-1 gap-6 xl:grid-cols-2" wire:ignore>
-        <x-card title="Grafik Tegangan" shadow>
-            <canvas id="chartVoltage" height="120"></canvas>
-        </x-card>
-        <x-card title="Grafik SoC and Duty Cycle" shadow>
-            <canvas id="chartSoc" height="120"></canvas>
-        </x-card>
-    </div>
-
-    <x-card title="Histori Data (20 terakhir)" shadow>
-        <div class="scc-table-wrap overflow-x-auto">
-            <table class="table table-zebra w-full text-sm">
-                <thead>
-                    <tr>
-                        <th>Waktu</th>
-                        <th>Vbat (V)</th>
-                        <th>Vpv (V)</th>
-                        <th>Arus (A)</th>
-                        <th>SoC (%)</th>
-                        <th>Duty (%)</th>
-                        <th>Fase</th>
-                        <th>Fuzzy</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($history as $row)
-                    <tr>
-                        <td class="text-xs">{{ $row->created_at->format('H:i:s') }}</td>
-                        <td>{{ number_format($row->vbat, 1) }}</td>
-                        <td>{{ number_format($row->vpv, 1) }}</td>
-                        <td>{{ number_format($row->ibat, 2) }}</td>
-                        <td>{{ number_format($row->soc, 1) }}</td>
-                        <td>{{ number_format($row->duty_cycle, 1) }}</td>
-                        <td><span class="badge badge-sm {{ $row->fase == 'Bulk' ? 'badge-error' : ($row->fase == 'Absorption' ? 'badge-warning' : 'badge-success') }}">{{ $row->fase }}</span></td>
-                        <td class="text-xs">{{ $row->label_e }}/{{ $row->label_de }}</td>
-                    </tr>
-                    @empty
-                    <tr><td colspan="8" class="text-center text-gray-400">Belum ada data</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
         </div>
     </x-card>
 
-    <div wire:poll.5000ms="refreshData"></div>
+    <div class="scc-clean-links">
+        <a href="/scc/analysis" wire:navigate>
+            <x-icon name="o-presentation-chart-line" class="h-5 w-5" />
+            <span>Analisis Mamdani</span>
+        </a>
+        <a href="/scc/fuzzy" wire:navigate>
+            <x-icon name="o-adjustments-horizontal" class="h-5 w-5" />
+            <span>Membership Function</span>
+        </a>
+        <a href="/scc/rules" wire:navigate>
+            <x-icon name="o-table-cells" class="h-5 w-5" />
+            <span>Rule Base</span>
+        </a>
+        <a href="/scc/history" wire:navigate>
+            <x-icon name="o-clock" class="h-5 w-5" />
+            <span>Riwayat Data</span>
+        </a>
+    </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-    <script>
-        let cvChart = null;
-        let csChart = null;
-        const chartTheme = window.SCCTheme?.chart ?? {};
-
-        function initCharts(data) {
-            const labels = data.map(d => new Date(d.created_at).toLocaleTimeString());
-
-            if (cvChart) { cvChart.destroy(); cvChart = null; }
-            if (csChart) { csChart.destroy(); csChart = null; }
-
-            cvChart = new Chart(document.getElementById('chartVoltage'), {
-                type: 'line',
-                data: {
-                    labels,
-                    datasets: [
-                        { label: 'Vbat (V)', data: data.map(d => d.vbat), borderColor: '#36d399', backgroundColor: '#36d39920', tension: 0.4, fill: true },
-                        { label: 'Vpv (V)', data: data.map(d => d.vpv), borderColor: chartTheme.panel || '#a78bfa', backgroundColor: '#a78bfa20', tension: 0.4, fill: true }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            labels: { color: chartTheme.labelColor || '#cbd5f5' }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(15, 23, 42, 0.94)',
-                            titleColor: chartTheme.titleColor || '#f8fafc',
-                            bodyColor: chartTheme.labelColor || '#cbd5f5',
-                            borderColor: 'rgba(96, 165, 250, 0.22)',
-                            borderWidth: 1,
-                        },
-                    },
-                    scales: {
-                        x: {
-                            title: { display: true, text: 'Waktu', color: chartTheme.labelColor || '#cbd5f5' },
-                            ticks: { color: chartTheme.labelColor || '#cbd5f5' },
-                            grid: { color: chartTheme.gridColor || 'rgba(148, 163, 184, 0.14)' }
-                        },
-                        y: {
-                            beginAtZero: false,
-                            title: { display: true, text: 'Tegangan (Volt)', color: chartTheme.labelColor || '#cbd5f5' },
-                            ticks: { color: chartTheme.labelColor || '#cbd5f5' },
-                            grid: { color: chartTheme.gridColor || 'rgba(148, 163, 184, 0.14)' }
-                        }
-                    }
-                }
-            });
-
-            csChart = new Chart(document.getElementById('chartSoc'), {
-                type: 'line',
-                data: {
-                    labels,
-                    datasets: [
-                        { label: 'SoC (%)', data: data.map(d => d.soc), borderColor: chartTheme.soc || '#60a5fa', backgroundColor: '#60a5fa20', tension: 0.4, fill: true },
-                        { label: 'Duty (%)', data: data.map(d => d.duty_cycle), borderColor: chartTheme.duty || '#8b5cf6', backgroundColor: '#8b5cf620', tension: 0.4, fill: true }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            labels: { color: chartTheme.labelColor || '#cbd5f5' }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(15, 23, 42, 0.94)',
-                            titleColor: chartTheme.titleColor || '#f8fafc',
-                            bodyColor: chartTheme.labelColor || '#cbd5f5',
-                            borderColor: 'rgba(96, 165, 250, 0.22)',
-                            borderWidth: 1,
-                        },
-                    },
-                    scales: {
-                        x: {
-                            title: { display: true, text: 'Waktu', color: chartTheme.labelColor || '#cbd5f5' },
-                            ticks: { color: chartTheme.labelColor || '#cbd5f5' },
-                            grid: { color: chartTheme.gridColor || 'rgba(148, 163, 184, 0.14)' }
-                        },
-                        y: {
-                            beginAtZero: false,
-                            title: { display: true, text: 'Persentase (%)', color: chartTheme.labelColor || '#cbd5f5' },
-                            ticks: { color: chartTheme.labelColor || '#cbd5f5' },
-                            grid: { color: chartTheme.gridColor || 'rgba(148, 163, 184, 0.14)' }
-                        }
-                    }
-                }
-            });
-        }
-
-        function fetchAndUpdate() {
-            fetch('/api/scc/history')
-                .then(r => r.json())
-                .then(res => {
-                    if (res.data && res.data.length) {
-                        initCharts(res.data.reverse());
-                    }
-                });
-        }
-
-        fetchAndUpdate();
-        setInterval(fetchAndUpdate, 5000);
-    </script>
+    <div wire:poll.visible.5000ms="refreshData"></div>
 </div>

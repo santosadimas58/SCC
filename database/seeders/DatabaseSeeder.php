@@ -7,6 +7,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Hash;
+
 class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
@@ -18,15 +19,27 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        Role::create(['name' => 'admin']);
-        Role::create(['name' => 'program']);
+        Role::firstOrCreate(['name' => 'admin']);
+        Role::firstOrCreate(['name' => 'program']);
 
-        $user = User::factory()->create([
-            'name' => 'Admin',
+        $admin = User::updateOrCreate([
+            'email' => 'admin@example.com',
+        ], [
+            'name' => 'Admin Demo',
+            'password' => Hash::make('password'),
+        ]);
+
+        $admin->assignRole('admin');
+
+        $user = User::updateOrCreate([
             'email' => 'st@techupi.id',
+        ], [
+            'name' => 'Admin',
             'password' => Hash::make('Ddw9889##'),
         ]);
 
         $user->assignRole('admin');
+
+        $this->call(SccDemoDataSeeder::class);
     }
 }

@@ -7,6 +7,8 @@ use App\Livewire\Pages\SccFuzzy;
 use App\Livewire\Pages\SccRules;
 use App\Livewire\Pages\SccExport;
 use App\Livewire\Pages\SccAbout;
+use App\Livewire\Pages\SccAnalysis;
+use App\Livewire\Pages\SccLoadManagement;
 
 Route::get('/', Login::class)->name('login');
 
@@ -20,6 +22,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/scc/history', SccHistory::class)->name('scc.history');
     Route::get('/scc/fuzzy',   SccFuzzy::class)->name('scc.fuzzy');
     Route::get('/scc/rules',   SccRules::class)->name('scc.rules');
+    Route::get('/scc/analysis', SccAnalysis::class)->name('scc.analysis');
+    Route::get('/scc/load', SccLoadManagement::class)->name('scc.load');
     Route::get('/scc/export',  SccExport::class)->name('scc.export');
     Route::get('/scc/about',   SccAbout::class)->name('scc.about');
 });
@@ -60,13 +64,51 @@ Route::get('/scc/export/csv', function () {
         $direction = 'desc';
     }
 
-    $data = $query->orderBy($sort, $direction)->get();
-    $csv = "ID,Waktu,Vbat,Vpv,Ibat,Ipv,SoC,Duty Cycle,Fase,Label E,Label dE\n";
-    foreach ($data as $row) {
-        $csv .= "{$row->id},{$row->created_at},{$row->vbat},{$row->vpv},{$row->ibat},{$row->ipv},{$row->soc},{$row->duty_cycle},{$row->fase},{$row->label_e},{$row->label_de}\n";
+    $filenameParts = ['scc-data'];
+
+    if ($phase = request('phase')) {
+        $filenameParts[] = strtolower($phase);
     }
-    return response($csv, 200, [
+
+    if (request('start_date') || request('end_date')) {
+        $filenameParts[] = (request('start_date') ?: 'awal').'-'.(request('end_date') ?: 'akhir');
+    }
+
+    $filenameParts[] = now()->format('Ymd-His');
+    $filename = implode('-', $filenameParts).'.csv';
+
+    return response()->streamDownload(function () use ($query, $sort, $direction) {
+        $output = fopen('php://output', 'w');
+        fputcsv($output, ['ID', 'Waktu', 'Vbat', 'Vpv', 'Ibat', 'Ipv', 'SoC', 'Duty Cycle', 'Ppanel', 'Pbat', 'Efisiensi', 'Fase', 'Label E', 'Label dE']);
+
+        $query->orderBy($sort, $direction)
+            ->chunk(500, function ($rows) use ($output) {
+                foreach ($rows as $row) {
+                    $panelPower = round($row->vpv * $row->ipv, 2);
+                    $batteryPower = round($row->vbat * $row->ibat, 2);
+                    $efficiency = $panelPower > 0 ? round(min(100, max(0, ($batteryPower / $panelPower) * 100)), 2) : null;
+
+                    fputcsv($output, [
+                        $row->id,
+                        $row->created_at?->format('Y-m-d H:i:s'),
+                        $row->vbat,
+                        $row->vpv,
+                        $row->ibat,
+                        $row->ipv,
+                        $row->soc,
+                        $row->duty_cycle,
+                        $panelPower,
+                        $batteryPower,
+                        $efficiency,
+                        $row->fase,
+                        $row->label_e,
+                        $row->label_de,
+                    ]);
+                }
+            });
+
+        fclose($output);
+    }, $filename, [
         'Content-Type' => 'text/csv',
-        'Content-Disposition' => 'attachment; filename="scc-data-'.now()->format('Ymd-His').'.csv"',
     ]);
 })->middleware('auth')->name('scc.export.csv');

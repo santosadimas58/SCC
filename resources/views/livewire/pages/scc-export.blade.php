@@ -12,6 +12,10 @@
                     <span class="font-bold">{{ $total }} record</span>
                 </div>
                 <div class="flex justify-between">
+                    <span class="text-gray-400">Data sesuai filter</span>
+                    <span class="font-bold">{{ $filteredTotal }} record</span>
+                </div>
+                <div class="flex justify-between">
                     <span class="text-gray-400">Data terakhir masuk</span>
                     <span class="font-bold">{{ $latest ? $latest->created_at->format('d/m/Y H:i:s') : '-' }}</span>
                 </div>
@@ -37,11 +41,11 @@
             <div class="space-y-3">
                 <div id="export-feedback" class="scc-note hidden"></div>
                 <div class="scc-export-actions">
-                    <button type="button" class="btn btn-primary flex-1 border-0" data-export-url="/scc/export/csv">
+                    <button type="button" class="btn btn-primary w-full justify-center border-0 whitespace-nowrap" data-export-url="{{ $this->exportUrl }}">
                         <x-icon name="o-arrow-down-tray" class="w-4 h-4" />
-                        Export seluruh data
+                        Export sesuai filter
                     </button>
-                    <a href="/scc/history" class="btn btn-outline flex-1">
+                    <a href="/scc/history" class="btn btn-outline w-full justify-center whitespace-nowrap">
                         <x-icon name="o-funnel" class="w-4 h-4" />
                         Buka filter riwayat
                     </a>
@@ -51,7 +55,37 @@
         </x-card>
     </div>
 
-    <x-card title="Preview Data Terbaru" shadow>
+    <x-card title="Filter Export" shadow>
+        <div class="scc-filters">
+            <x-input
+                label="Pencarian"
+                placeholder="Cari ID, fase, label fuzzy..."
+                wire:model.live.debounce.300ms="search"
+                icon="o-magnifying-glass"
+            />
+            <x-select
+                label="Fase Charging"
+                wire:model.live="phase"
+                :options="[
+                    ['id' => '', 'name' => 'Semua Fase'],
+                    ['id' => 'Bulk', 'name' => 'Bulk'],
+                    ['id' => 'Absorption', 'name' => 'Absorption'],
+                    ['id' => 'Float', 'name' => 'Float'],
+                    ['id' => 'Standby', 'name' => 'Standby'],
+                ]"
+            />
+            <x-input label="Tanggal Mulai" wire:model.live="startDate" type="date" />
+            <x-input label="Tanggal Akhir" wire:model.live="endDate" type="date" />
+            <div class="flex items-end">
+                <x-button label="Reset Filter" wire:click="resetFilter" class="btn-ghost w-full" icon="o-arrow-path" />
+            </div>
+        </div>
+        <div class="mt-4 rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-3 text-sm text-slate-300">
+            CSV akan berisi {{ $filteredTotal }} record sesuai filter aktif, termasuk kolom power panel, power baterai, dan estimasi efisiensi.
+        </div>
+    </x-card>
+
+    <x-card title="Preview Data Export" shadow>
         <div class="scc-table-wrap overflow-x-auto">
             <table class="table table-zebra w-full text-sm">
                 <thead>
@@ -61,6 +95,7 @@
                         <th>Vpv</th>
                         <th>SoC</th>
                         <th>Duty</th>
+                        <th>Ppanel</th>
                         <th>Fase</th>
                     </tr>
                 </thead>
@@ -72,10 +107,11 @@
                             <td>{{ number_format($row->vpv, 1) }} V</td>
                             <td>{{ number_format($row->soc, 1) }} %</td>
                             <td>{{ number_format($row->duty_cycle, 1) }} %</td>
-                            <td><span class="badge {{ $row->fase === 'Bulk' ? 'badge-error' : ($row->fase === 'Absorption' ? 'badge-warning' : 'badge-success') }}">{{ $row->fase }}</span></td>
+                            <td>{{ number_format($row->vpv * $row->ipv, 1) }} W</td>
+                            <td><span class="badge {{ $row->fase === 'Bulk' ? 'badge-error' : ($row->fase === 'Absorption' ? 'badge-warning' : ($row->fase === 'Float' ? 'badge-success' : 'badge-info')) }}">{{ $row->fase }}</span></td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="py-6"><div class="scc-empty">Belum ada data untuk ditampilkan.</div></td></tr>
+                        <tr><td colspan="7" class="py-6"><div class="scc-empty">Belum ada data untuk ditampilkan.</div></td></tr>
                     @endforelse
                 </tbody>
             </table>

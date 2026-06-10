@@ -18,6 +18,12 @@ class SccData extends Model
         'fase',
         'label_e',
         'label_de',
+        'load_name',
+        'load_status',
+        'load_power',
+        'load_current',
+        'net_power',
+        'load_reason',
     ];
 
     protected $casts = [
@@ -27,5 +33,8 @@ class SccData extends Model
         'ibat'       => 'float',
         'soc'        => 'float',
         'duty_cycle' => 'float',
+        'load_power' => 'float',
+        'load_current' => 'float',
+        'net_power' => 'float',
     ];
 }
