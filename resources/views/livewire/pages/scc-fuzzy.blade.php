@@ -2,7 +2,7 @@
     <section class="scc-page-hero">
         <div class="scc-eyebrow">Fuzzy Logic</div>
         <h1 class="mt-3 text-3xl font-semibold text-white">Fungsi Keanggotaan Fuzzy</h1>
-        <p class="mt-2 max-w-2xl text-sm text-slate-300">Kategori input dan output fuzzy disusun sebagai peta keputusan agar hubungan antara kondisi panel, kondisi baterai, error tegangan, perubahan error, dan duty cycle lebih cepat dipahami.</p>
+        <p class="mt-2 max-w-2xl text-sm text-slate-300">Simulasi menggunakan fuzzy Mamdani untuk mengubah error tegangan dan delta error menjadi duty cycle PWM kontinu.</p>
     </section>
 
     <div class="scc-note">
@@ -10,31 +10,31 @@
             <span class="scc-fuzzy-chip">Demo Mode / Simulasi BMKG</span>
             <span>Cuaca/BMKG memengaruhi simulasi <b>Vpv</b> dan <b>Ipv</b>, bukan menjadi input fuzzy langsung.</span>
         </div>
-        <div class="mt-2 text-sm text-slate-400">Keputusan fuzzy tetap berbasis error, delta error, dan kondisi charging, lalu dipetakan sebagai <b>fuzzy rule-based dengan output duty cycle diskrit</b>.</div>
+        <div class="mt-2 text-sm text-slate-400">Alur Mamdani: <b>fuzzifikasi membership overlap → inferensi min-max → agregasi output → defuzzifikasi centroid</b>.</div>
         <div class="mt-2 text-sm text-slate-400">Load Management DC adalah simulasi proteksi beban berbasis <b>SoC</b> dan kondisi daya panel. Bagian ini tidak mengubah rule fuzzy charging dan belum mengontrol hardware asli.</div>
     </div>
 
     @php
         $errorSets = [
-            ['label' => 'NB', 'name' => 'Negatif Besar', 'range' => '<= -0.60 V', 'tone' => 'danger', 'width' => 18],
-            ['label' => 'NS', 'name' => 'Negatif Kecil', 'range' => '-0.60 s/d -0.20 V', 'tone' => 'warning', 'width' => 21],
-            ['label' => 'ZO', 'name' => 'Nol', 'range' => '-0.20 s/d +0.20 V', 'tone' => 'info', 'width' => 22],
-            ['label' => 'PS', 'name' => 'Positif Kecil', 'range' => '+0.20 s/d +0.60 V', 'tone' => 'warning', 'width' => 21],
-            ['label' => 'PB', 'name' => 'Positif Besar', 'range' => '>= +0.60 V', 'tone' => 'success', 'width' => 18],
+            ['label' => 'NB', 'name' => 'Negatif Besar', 'range' => 'shoulder: penuh <= -0.80 V, nol -0.40 V', 'tone' => 'danger', 'width' => 18],
+            ['label' => 'NS', 'name' => 'Negatif Kecil', 'range' => 'segitiga: -0.80 / -0.40 / 0.00 V', 'tone' => 'warning', 'width' => 21],
+            ['label' => 'ZO', 'name' => 'Nol', 'range' => 'segitiga: -0.40 / 0.00 / +0.40 V', 'tone' => 'info', 'width' => 22],
+            ['label' => 'PS', 'name' => 'Positif Kecil', 'range' => 'segitiga: 0.00 / +0.40 / +0.80 V', 'tone' => 'warning', 'width' => 21],
+            ['label' => 'PB', 'name' => 'Positif Besar', 'range' => 'shoulder: nol +0.40 V, penuh >= +0.80 V', 'tone' => 'success', 'width' => 18],
         ];
         $deltaSets = [
-            ['label' => 'NB', 'name' => 'Turun Cepat', 'range' => '<= -0.20', 'tone' => 'danger', 'width' => 18],
-            ['label' => 'NS', 'name' => 'Turun Pelan', 'range' => '-0.20 s/d -0.05', 'tone' => 'warning', 'width' => 21],
-            ['label' => 'ZO', 'name' => 'Stabil', 'range' => '-0.05 s/d +0.05', 'tone' => 'info', 'width' => 22],
-            ['label' => 'PS', 'name' => 'Naik Pelan', 'range' => '+0.05 s/d +0.20', 'tone' => 'warning', 'width' => 21],
-            ['label' => 'PB', 'name' => 'Naik Cepat', 'range' => '>= +0.20', 'tone' => 'success', 'width' => 18],
+            ['label' => 'NB', 'name' => 'Turun Cepat', 'range' => 'shoulder: penuh <= -0.30, nol -0.125', 'tone' => 'danger', 'width' => 18],
+            ['label' => 'NS', 'name' => 'Turun Pelan', 'range' => 'segitiga: -0.30 / -0.125 / 0.00', 'tone' => 'warning', 'width' => 21],
+            ['label' => 'ZO', 'name' => 'Stabil', 'range' => 'segitiga: -0.125 / 0.00 / +0.125', 'tone' => 'info', 'width' => 22],
+            ['label' => 'PS', 'name' => 'Naik Pelan', 'range' => 'segitiga: 0.00 / +0.125 / +0.30', 'tone' => 'warning', 'width' => 21],
+            ['label' => 'PB', 'name' => 'Naik Cepat', 'range' => 'shoulder: nol +0.125, penuh >= +0.30', 'tone' => 'success', 'width' => 18],
         ];
         $outputSets = [
-            ['label' => 'NB', 'value' => '5%', 'tone' => 'danger', 'position' => 5],
-            ['label' => 'NS', 'value' => '22%', 'tone' => 'warning', 'position' => 22],
-            ['label' => 'ZO', 'value' => '45%', 'tone' => 'info', 'position' => 45],
-            ['label' => 'PS', 'value' => '70%', 'tone' => 'warning', 'position' => 70],
-            ['label' => 'PB', 'value' => '92%', 'tone' => 'success', 'position' => 92],
+            ['label' => 'NB', 'value' => 'pusat 10%', 'tone' => 'danger', 'position' => 10],
+            ['label' => 'NS', 'value' => 'pusat 27.5%', 'tone' => 'warning', 'position' => 28],
+            ['label' => 'ZO', 'value' => 'pusat 50%', 'tone' => 'info', 'position' => 50],
+            ['label' => 'PS', 'value' => 'pusat 72.5%', 'tone' => 'warning', 'position' => 73],
+            ['label' => 'PB', 'value' => 'pusat 90%', 'tone' => 'success', 'position' => 90],
         ];
     @endphp
 
@@ -63,10 +63,34 @@
             </div>
             <div>
                 <div class="font-semibold text-white">Duty Cycle PWM</div>
-                <div class="mt-1 text-sm text-slate-400">Output fuzzy rule-based mengatur aksi PWM diskrit pada buck converter.</div>
+                <div class="mt-1 text-sm text-slate-400">Centroid dari agregasi output menghasilkan duty cycle kontinu.</div>
             </div>
         </div>
     </div>
+
+    <x-card title="Fokus Audit: Fuzzy Mamdani" shadow>
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div class="scc-interpret-card">
+                <div class="scc-interpret-label">1. Fuzzifikasi</div>
+                <div class="mt-2 text-sm text-slate-300">Nilai crisp <b>error</b> dan <b>delta error</b> diubah menjadi derajat keanggotaan NB, NS, ZO, PS, dan PB. Karena kurva overlap, satu input bisa mengaktifkan lebih dari satu label.</div>
+            </div>
+            <div class="scc-interpret-card">
+                <div class="scc-interpret-label">2. Inferensi Min</div>
+                <div class="mt-2 text-sm text-slate-300">Setiap rule IF-THEN memakai operator <b>min</b> untuk menentukan firing strength. Contoh: IF error PB AND delta error ZO THEN duty PB.</div>
+            </div>
+            <div class="scc-interpret-card">
+                <div class="scc-interpret-label">3. Agregasi Max</div>
+                <div class="mt-2 text-sm text-slate-300">Semua konsekuen output digabung dengan operator <b>max</b>, sehingga output duty tidak dipilih dari satu rule saja, tetapi dari gabungan rule yang aktif.</div>
+            </div>
+            <div class="scc-interpret-card">
+                <div class="scc-interpret-label">4. Centroid</div>
+                <div class="mt-2 text-sm text-slate-300">Area output teragregasi dihitung titik pusatnya untuk menghasilkan <b>duty cycle kontinu</b>. Inilah alasan transisi PWM lebih halus daripada kontrol threshold.</div>
+            </div>
+        </div>
+        <div class="mt-4 scc-note">
+            Klaim utama presentasi: Mamdani tidak hanya memberi label NB/NS/ZO/PS/PB, tetapi menghasilkan duty cycle numerik melalui centroid. Halaman Analisis menampilkan bukti error, delta error, agregasi output, serta pembanding Mamdani vs threshold.
+        </div>
+    </x-card>
 
     <div class="grid gap-6 xl:grid-cols-2">
         <x-card title="Input Fuzzy pada SCC" shadow>
@@ -79,10 +103,10 @@
 
         <x-card title="Output Fuzzy" shadow>
             <div class="space-y-3 text-sm">
-                <p>Sistem ini menggunakan <b>fuzzy rule-based dengan output duty cycle diskrit</b>. Output fuzzy berupa label keputusan duty cycle seperti NB, NS, ZO, PS, dan PB yang dipetakan ke nilai PWM tertentu.</p>
+                <p>Sistem menggunakan <b>fuzzy Mamdani</b>. Setiap rule memotong himpunan output berdasarkan firing strength, seluruh konsekuen digabung, lalu centroid menghasilkan duty cycle kontinu.</p>
                 <p>Nilai duty cycle PWM menentukan besar kecilnya aksi buck converter, sedangkan mode charging menunjukkan konteks operasinya: <b>Bulk</b>, <b>Absorption</b>, <b>Float</b>, atau <b>Standby</b>.</p>
                 <p>Kontrol beban DC berada di luar fuzzy charging. Status <b>ON</b>, <b>LIMITED</b>, atau <b>OFF</b> ditentukan oleh proteksi sederhana dari SoC baterai dan kecukupan daya panel.</p>
-                <p>Dengan output diskrit, keputusan sistem tetap mudah dijelaskan saat demo: duty dinaikkan, ditahan, diturunkan, atau dimatikan saat panel tidak cukup.</p>
+                <p>Label NB, NS, ZO, PS, dan PB tetap ditampilkan sebagai label dominan agar keputusan mudah dijelaskan, tetapi nilai akhir berasal dari centroid, bukan pemilihan satu angka diskrit.</p>
             </div>
         </x-card>
     </div>
@@ -194,7 +218,7 @@
 
     <x-card title="Skenario Demo" shadow>
         <div class="mb-4 text-sm text-slate-300">
-            Skenario ini membantu menjelaskan bagaimana perubahan cuaca dan kondisi baterai memengaruhi keputusan fuzzy rule-based, output duty cycle diskrit, dan mode charging saat presentasi.
+            Skenario ini membantu menjelaskan bagaimana perubahan cuaca dan kondisi baterai memengaruhi inferensi Mamdani, duty cycle hasil centroid, dan mode charging saat presentasi.
         </div>
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div class="scc-interpret-card">

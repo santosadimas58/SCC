@@ -36,6 +36,21 @@
             <div class="scc-stat-value mt-2">{{ $summary['max_panel_power'] !== null ? number_format($summary['max_panel_power'], 1).' W' : '-' }}</div>
             <div class="mt-1 text-xs text-slate-500">Puncak input panel</div>
         </x-card>
+        <x-card shadow class="scc-stat-card">
+            <div class="text-xs text-gray-400">Rata-rata |Error|</div>
+            <div class="scc-stat-value mt-2">{{ $controlComparison['avg_abs_error'] !== null ? number_format($controlComparison['avg_abs_error'], 2).' V' : '-' }}</div>
+            <div class="mt-1 text-xs text-slate-500">Jarak Vbat ke target fase</div>
+        </x-card>
+        <x-card shadow class="scc-stat-card">
+            <div class="text-xs text-gray-400">Step Duty Mamdani</div>
+            <div class="scc-stat-value mt-2">{{ $controlComparison['mamdani_avg_step'] !== null ? number_format($controlComparison['mamdani_avg_step'], 1).' %' : '-' }}</div>
+            <div class="mt-1 text-xs text-slate-500">Lonjakan saat PWM berubah</div>
+        </x-card>
+        <x-card shadow class="scc-stat-card">
+            <div class="text-xs text-gray-400">Lebih Halus dari Threshold</div>
+            <div class="scc-stat-value mt-2">{{ $controlComparison['smoothness_gain'] !== null ? number_format($controlComparison['smoothness_gain'], 1).' %' : '-' }}</div>
+            <div class="mt-1 text-xs text-slate-500">Pembanding kontrol bertingkat</div>
+        </x-card>
     </div>
 
     <div class="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
@@ -65,11 +80,102 @@
         </x-card>
     </div>
 
+    <div class="grid gap-6 xl:grid-cols-2">
+        <x-card title="Respons Error Mamdani" shadow>
+            <script type="application/json" id="scc-mamdani-timeline-data">
+                @json($mamdaniTimeline)
+            </script>
+            <div class="scc-chart-frame">
+                <canvas id="chartMamdaniError" height="145"></canvas>
+            </div>
+            <div class="mt-3 text-xs text-slate-500">
+                Error dihitung dari Vref fase charging dikurangi Vbat. Delta error menunjukkan perubahan error antar sampel.
+            </div>
+        </x-card>
+
+        <x-card title="Mamdani vs Kontrol Threshold" shadow>
+            <div class="scc-chart-frame">
+                <canvas id="chartMamdaniComparison" height="145"></canvas>
+            </div>
+            <div class="mt-3 text-xs text-slate-500">
+                Threshold dipakai sebagai baseline sederhana. Nilai Mamdani berasal dari inferensi min-max dan defuzzifikasi centroid.
+            </div>
+        </x-card>
+    </div>
+
+    <x-card title="Bukti Inferensi Mamdani pada Sampel Terbaru" shadow>
+        @if($mamdaniExample)
+            <div class="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+                <div class="scc-fuzzy-output">
+                    <div>
+                        <div class="scc-fuzzy-rule-label">Sampel {{ $mamdaniExample['time'] ?? '-' }} · {{ $mamdaniExample['phase'] ?? '-' }}</div>
+                        <div class="scc-fuzzy-rule-text">
+                            e = {{ number_format($mamdaniExample['error'], 3) }} V,
+                            de = {{ number_format($mamdaniExample['delta_error'], 3) }}
+                        </div>
+                    </div>
+                    <div class="scc-fuzzy-output-base">
+                        <span>Centroid Mamdani</span>
+                        <b>{{ number_format($mamdaniExample['mamdani_centroid'], 2) }} %</b>
+                    </div>
+                    <div class="scc-fuzzy-output-base">
+                        <span>Duty akhir setelah batas fase</span>
+                        <b>{{ number_format($mamdaniExample['final_duty'], 2) }} %</b>
+                    </div>
+                </div>
+
+                <div class="grid gap-4 md:grid-cols-3">
+                    <div class="scc-note">
+                        <div class="font-semibold text-white">Membership Error</div>
+                        <div class="mt-3 grid gap-2">
+                            @foreach($mamdaniExample['error_memberships'] as $label => $value)
+                                <div class="flex items-center justify-between gap-3">
+                                    <span class="scc-membership-badge scc-tone-info">{{ $label }}</span>
+                                    <span>{{ number_format($value, 3) }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    <div class="scc-note">
+                        <div class="font-semibold text-white">Membership Delta Error</div>
+                        <div class="mt-3 grid gap-2">
+                            @foreach($mamdaniExample['delta_memberships'] as $label => $value)
+                                <div class="flex items-center justify-between gap-3">
+                                    <span class="scc-membership-badge scc-tone-warning">{{ $label }}</span>
+                                    <span>{{ number_format($value, 3) }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    <div class="scc-note">
+                        <div class="font-semibold text-white">Agregasi Output</div>
+                        <div class="mt-3 grid gap-2">
+                            @foreach($mamdaniExample['rule_strengths'] as $label => $value)
+                                <div class="flex items-center justify-between gap-3">
+                                    <span class="scc-membership-badge scc-tone-success">{{ $label }}</span>
+                                    <span>{{ number_format($value, 3) }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @else
+            <div class="scc-note">Belum ada sampel aktif untuk menjelaskan inferensi Mamdani.</div>
+        @endif
+    </x-card>
+
     <x-card title="Interpretasi Cepat" shadow>
         <div class="grid gap-4 md:grid-cols-3">
-            <div class="scc-note">Duty cycle cenderung tinggi saat SoC masih rendah karena sistem mendorong fase Bulk untuk mempercepat pengisian.</div>
-            <div class="scc-note">Saat SoC naik, duty cycle idealnya mulai turun karena sistem masuk Absorption atau Float.</div>
-            <div class="scc-note">Distribusi fase membantu melihat apakah sistem lebih sering charging aktif, menjaga baterai, atau berada pada kondisi Standby.</div>
+            @foreach($quickInsights as $insight)
+                <div class="scc-note">
+                    <div class="mb-2 flex items-center justify-between gap-3">
+                        <span class="font-semibold text-white">{{ $insight['title'] }}</span>
+                        <span class="scc-metric-state scc-metric-{{ $insight['tone'] }}">{{ ucfirst($insight['tone']) }}</span>
+                    </div>
+                    <div>{{ $insight['body'] }}</div>
+                </div>
+            @endforeach
         </div>
     </x-card>
 </div>

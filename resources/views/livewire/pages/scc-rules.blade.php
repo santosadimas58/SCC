@@ -7,7 +7,7 @@
     <div class="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
         <div class="scc-note">
             <div class="font-semibold text-white">Cara membaca tabel</div>
-            <div class="mt-2">Pilih baris berdasarkan kategori <b>error (e)</b> dan kolom berdasarkan kategori <b>delta error (de)</b>. Titik pertemuan keduanya menunjukkan kategori output duty cycle PWM yang dipakai pengendali fuzzy.</div>
+            <div class="mt-2">Setiap input dapat aktif pada lebih dari satu kategori karena membership function saling overlap. Kekuatan aturan dihitung dengan operator <b>min</b>, lalu seluruh output digabung menggunakan <b>max</b>.</div>
             <div class="mt-4 flex flex-wrap gap-2">
                 <span class="badge badge-error">NB</span>
                 <span class="badge badge-warning">NS</span>
@@ -58,7 +58,7 @@
             </table>
         </div>
         <div class="mt-4 text-xs text-gray-400">
-            Metode: fuzzy rule-based dengan output duty cycle diskrit
+            Metode: Mamdani min-max dengan defuzzifikasi centroid pada domain duty cycle 0-100%.
         </div>
     </x-card>
 </div>

@@ -11,7 +11,7 @@ services:
         container_name: scc-app
         working_dir: /var/www
         ports:
-            - "8000:8000"
+            - "8010:8000"
             - "5176:5173"
         volumes:
             - .:/var/www
@@ -52,7 +52,7 @@ services:
         networks:
             - WebFPTE
         ports:
-            - "3313:3306"
+            - "3314:3306"
 
     redis:
         image: redis:alpine

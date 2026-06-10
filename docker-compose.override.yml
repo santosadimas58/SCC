@@ -14,7 +14,7 @@ services:
   mysql:
     restart: unless-stopped
     ports:
-      - "3313:3306"
+      - "3314:3306"
 
   redis:
     restart: unless-stopped

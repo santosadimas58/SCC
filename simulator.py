@@ -14,11 +14,33 @@ BULK_TARGET = 14.4
 ABSORPTION_TARGET = 14.4
 FLOAT_TARGET = 13.6
 FUZZY_OUTPUTS = {
-    "NB": 5.0,
-    "NS": 22.0,
-    "ZO": 45.0,
-    "PS": 70.0,
-    "PB": 92.0,
+    "NB": 10.0,
+    "NS": 27.5,
+    "ZO": 50.0,
+    "PS": 72.5,
+    "PB": 90.0,
+}
+FUZZY_LABELS = ["NB", "NS", "ZO", "PS", "PB"]
+ERROR_SETS = {
+    "NB": ("left", -0.80, -0.40),
+    "NS": ("triangle", -0.80, -0.40, 0.00),
+    "ZO": ("triangle", -0.40, 0.00, 0.40),
+    "PS": ("triangle", 0.00, 0.40, 0.80),
+    "PB": ("right", 0.40, 0.80),
+}
+DELTA_ERROR_SETS = {
+    "NB": ("left", -0.30, -0.125),
+    "NS": ("triangle", -0.30, -0.125, 0.00),
+    "ZO": ("triangle", -0.125, 0.00, 0.125),
+    "PS": ("triangle", 0.00, 0.125, 0.30),
+    "PB": ("right", 0.125, 0.30),
+}
+OUTPUT_SETS = {
+    "NB": ("left", 10.0, 30.0),
+    "NS": ("triangle", 10.0, 27.5, 50.0),
+    "ZO": ("triangle", 30.0, 50.0, 70.0),
+    "PS": ("triangle", 50.0, 72.5, 90.0),
+    "PB": ("right", 70.0, 90.0),
 }
 FUZZY_RULES = {
     "NB": {"NB": "NB", "NS": "NB", "ZO": "NB", "PS": "NS", "PB": "ZO"},
@@ -68,28 +90,64 @@ def clamp(value, minimum, maximum):
 # =========================================================
 # fuzzy control
 # =========================================================
-def fuzzy_error_label(value):
-    if value <= -0.60:
-        return "NB"
-    if value <= -0.20:
-        return "NS"
-    if value < 0.20:
-        return "ZO"
-    if value < 0.60:
-        return "PS"
-    return "PB"
+def membership(value, fuzzy_set):
+    set_type = fuzzy_set[0]
+
+    if set_type == "left":
+        full_until, zero_at = fuzzy_set[1:]
+        if value <= full_until:
+            return 1.0
+        if value >= zero_at:
+            return 0.0
+        return (zero_at - value) / (zero_at - full_until)
+
+    if set_type == "right":
+        zero_at, full_from = fuzzy_set[1:]
+        if value <= zero_at:
+            return 0.0
+        if value >= full_from:
+            return 1.0
+        return (value - zero_at) / (full_from - zero_at)
+
+    left, peak, right = fuzzy_set[1:]
+    if value <= left or value >= right:
+        return 0.0
+    if value == peak:
+        return 1.0
+    if value < peak:
+        return (value - left) / (peak - left)
+    return (right - value) / (right - peak)
 
 
-def fuzzy_delta_label(value):
-    if value <= -0.20:
-        return "NB"
-    if value <= -0.05:
-        return "NS"
-    if value < 0.05:
-        return "ZO"
-    if value < 0.20:
-        return "PS"
-    return "PB"
+def fuzzify(value, fuzzy_sets):
+    return {label: membership(value, fuzzy_set) for label, fuzzy_set in fuzzy_sets.items()}
+
+
+def dominant_label(memberships):
+    return max(FUZZY_LABELS, key=lambda label: memberships[label])
+
+
+def mamdani_centroid(error_memberships, delta_memberships):
+    output_strengths = {label: 0.0 for label in FUZZY_LABELS}
+
+    for error_label, row in FUZZY_RULES.items():
+        for delta_label, output_label in row.items():
+            strength = min(error_memberships[error_label], delta_memberships[delta_label])
+            output_strengths[output_label] = max(output_strengths[output_label], strength)
+
+    weighted_sum = 0.0
+    membership_sum = 0.0
+
+    for index in range(401):
+        duty = index * 0.25
+        aggregated = max(
+            min(output_strengths[label], membership(duty, OUTPUT_SETS[label]))
+            for label in FUZZY_LABELS
+        )
+        weighted_sum += duty * aggregated
+        membership_sum += aggregated
+
+    return weighted_sum / membership_sum if membership_sum > 0 else FUZZY_OUTPUTS["ZO"]
 
 
 def charging_phase(vpv, vbat, soc):
@@ -112,11 +170,11 @@ def target_for_phase(fase, vbat):
     return vbat
 
 
-def fuzzy_duty(fase, output_label, vpv, vbat):
+def fuzzy_duty(fase, mamdani_output, vpv, vbat):
     if fase == "Standby":
         return 0.0
 
-    duty = FUZZY_OUTPUTS[output_label]
+    duty = mamdani_output
 
     if fase == "Absorption":
         duty *= 0.72
@@ -153,10 +211,11 @@ while True:
 
     error = target_voltage - vbat
     delta_error = error - prev_error
-    label_e = fuzzy_error_label(error)
-    label_de = fuzzy_delta_label(delta_error)
-    output_label = FUZZY_RULES[label_e][label_de]
-    duty_cycle = fuzzy_duty(fase, output_label, vpv, vbat)
+    error_memberships = fuzzify(error, ERROR_SETS)
+    delta_memberships = fuzzify(delta_error, DELTA_ERROR_SETS)
+    label_e = dominant_label(error_memberships)
+    label_de = dominant_label(delta_memberships)
+    duty_cycle = fuzzy_duty(fase, mamdani_centroid(error_memberships, delta_memberships), vpv, vbat)
 
     if fase != "Standby":
         max_ipv = 2.8 + max(0.0, vpv - 17.0) * 0.9

@@ -60,6 +60,7 @@
                         <x-menu-item title="Real-time Data" icon="o-signal" link="/scc" />
                         <x-menu-item title="Riwayat Data" icon="o-clock" link="/scc/history" />
                         <x-menu-item title="Analisis Performa" icon="o-presentation-chart-line" link="/scc/analysis" />
+                        <x-menu-item title="Beban DC" icon="o-light-bulb" link="/scc/load" />
                     </x-menu-sub>
                     <x-menu-sub title="Fuzzy Logic" icon="o-cpu-chip">
                         <x-menu-item title="Membership Function" icon="o-adjustments-horizontal" link="/scc/fuzzy" />

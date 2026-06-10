@@ -1,0 +1,69 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Laporan Validasi Simulasi SCC</title><style>@page {
+    margin: 18mm 14mm;
+}
+
+body {
+    color: #111827;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.45;
+}
+
+h1 {
+    border-bottom: 2px solid #1f2937;
+    font-size: 20pt;
+    margin: 0 0 12px;
+    padding-bottom: 8px;
+}
+
+h2 {
+    color: #1f2937;
+    font-size: 15pt;
+    margin: 22px 0 8px;
+}
+
+code {
+    background: #eef2ff;
+    border-radius: 3px;
+    color: #1e3a8a;
+    padding: 1px 4px;
+}
+
+table {
+    border-collapse: collapse;
+    margin: 10px 0 16px;
+    table-layout: fixed;
+    width: 100%;
+}
+
+th,
+td {
+    border: 1px solid #cbd5e1;
+    padding: 5px 6px;
+    text-align: left;
+    vertical-align: top;
+    word-break: normal;
+    overflow-wrap: break-word;
+}
+
+th {
+    background: #e2e8f0;
+    font-weight: 700;
+}
+
+thead th {
+    background: #1f2937;
+    color: #ffffff;
+}
+
+.meta {
+    background: #f8fafc;
+    border-left: 4px solid #2563eb;
+    padding: 10px 12px;
+}
+
+ul,
+ol {
+    padding-left: 22px;
+}
+</style></head><body><h1>Laporan Perbandingan Simulasi SCC dengan Data Irradiance NASA POWER</h1><p class="meta">Lokasi simulasi: Setiabudhi/Bandung sekitar latitude -6.86 dan longitude 107.59. Data project diambil dari tabel <code>scc_data</code>. Data pembanding memakai NASA POWER Hourly API parameter <code>ALLSKY_SFC_SW_DWN</code>, <code>CLOUD_AMT</code>, dan <code>T2M</code>.</p><h2>Ringkasan</h2><table><tbody><tr><th>Jumlah record SCC</th><td>162 record</td></tr><tr><th>Jumlah agregasi per jam</th><td>4 jam</td></tr><tr><th>Rentang data project</th><td>12 May 2026 05:00 WIB sampai 15 May 2026 03:00 WIB</td></tr><tr><th>Rata-rata daya panel simulasi</th><td>38.31 W</td></tr><tr><th>Maksimum daya panel simulasi</th><td>43.89 W</td></tr><tr><th>Rata-rata irradiance NASA referensi</th><td>12.51 Wh/m² per jam</td></tr><tr><th>Maksimum irradiance NASA referensi</th><td>50.03 Wh/m² per jam</td></tr><tr><th>Kesesuaian pola jam yang tersedia</th><td>0.0%</td></tr><tr><th>Status demo project</th><td>BMKG_WEATHER_DEMO_MODE=true, sehingga simulator dapat menghasilkan daya panel untuk kebutuhan presentasi walaupun timestamp berada di luar jam efektif matahari.</td></tr></tbody></table><h2>Metode Perbandingan</h2><p>Project SCC ini menghasilkan data simulasi panel berupa <code>Vpv</code> dan <code>Ipv</code>. Daya panel simulasi dihitung dengan rumus <code>Ppanel = Vpv × Ipv</code>. Nilai tersebut dibandingkan dengan data radiasi matahari publik NASA POWER, yaitu <code>ALLSKY_SFC_SW_DWN</code>.</p><p>Karena data SCC di project adalah demo tahun 2026 dan NASA POWER belum menyediakan nilai irradiance hourly yang valid untuk tanggal tersebut, laporan ini memakai tanggal kalender yang sama pada tahun 2025 sebagai baseline historis. Perbandingan difokuskan pada pola, bukan kalibrasi absolut: saat irradiance tinggi, daya panel simulasi seharusnya tinggi; saat irradiance nol/rendah, daya panel seharusnya rendah.</p><p>Catatan penting: data project yang tersedia pada database saat laporan dibuat berada pada pukul 02:00-06:00 WIB. Pada jam tersebut, data NASA menunjukkan irradiance nol atau sangat rendah. Karena project sedang berjalan dalam mode demo, simulator masih dapat membuat daya panel puluhan watt agar dashboard presentasi tetap bergerak. Hal ini membuat perbandingan timestamp langsung menunjukkan ketidaksesuaian, tetapi sekaligus menjadi bukti batasan simulasi yang perlu dijelaskan saat UAS.</p><h2>Tabel Perbandingan per Jam</h2><p>Tabel dibuat ringkas agar mudah dibaca di dokumen. Detail fase, cloud, suhu, dan interpretasi ditulis setelah tabel.</p><table><thead><tr><th>No</th><th>Waktu Project</th><th>NASA Referensi</th><th>Sampel</th><th>Ppanel Simulasi</th><th>SoC</th><th>Duty</th><th>Irradiance NASA</th></tr></thead><tbody><tr><td>1</td><td>12 May 2026 05:00 WIB</td><td>12 May 2025 05:00 WIB</td><td>16</td><td>38.15 W</td><td>33.83%</td><td>72.59%</td><td>0.00 Wh/m²</td></tr><tr><td>2</td><td>12 May 2026 06:00 WIB</td><td>12 May 2025 06:00 WIB</td><td>132</td><td>35.21 W</td><td>76.52%</td><td>46.47%</td><td>50.03 Wh/m²</td></tr><tr><td>3</td><td>15 May 2026 02:00 WIB</td><td>15 May 2025 02:00 WIB</td><td>2</td><td>35.98 W</td><td>64.72%</td><td>70.00%</td><td>0.00 Wh/m²</td></tr><tr><td>4</td><td>15 May 2026 03:00 WIB</td><td>15 May 2025 03:00 WIB</td><td>12</td><td>43.89 W</td><td>82.21%</td><td>45.52%</td><td>0.00 Wh/m²</td></tr></tbody></table><h2>Detail Interpretasi per Jam</h2><table><thead><tr><th>No</th><th>Parameter Project</th><th>Parameter NASA</th><th>Interpretasi</th></tr></thead><tbody><tr><td>1</td><td>Vpv 18.75 V; Ipv 2.03 A; fase Bulk.</td><td>Cloud 99.17%; suhu 18.46 °C.</td><td>Tidak sesuai: irradiance rendah/nol tetapi simulasi masih menghasilkan daya panel. Ini indikasi efek demo mode atau timestamp tidak representatif.</td></tr><tr><td>2</td><td>Vpv 17.28 V; Ipv 1.84 A; fase Bulk,Absorption,Float,Standby.</td><td>Cloud 97.73%; suhu 19.34 °C.</td><td>Cukup sesuai: pola tidak bertentangan, tetapi nilai berada di area transisi.</td></tr><tr><td>3</td><td>Vpv 17.41 V; Ipv 2.06 A; fase Bulk.</td><td>Cloud 89.36%; suhu 20.13 °C.</td><td>Tidak sesuai: irradiance rendah/nol tetapi simulasi masih menghasilkan daya panel. Ini indikasi efek demo mode atau timestamp tidak representatif.</td></tr><tr><td>4</td><td>Vpv 17.97 V; Ipv 2.43 A; fase Bulk,Absorption,Float.</td><td>Cloud 96.41%; suhu 19.66 °C.</td><td>Tidak sesuai: irradiance rendah/nol tetapi simulasi masih menghasilkan daya panel. Ini indikasi efek demo mode atau timestamp tidak representatif.</td></tr></tbody></table><h2>Analisis</h2><p>Secara umum, data project menunjukkan daya panel simulasi berada pada kisaran 43.89 W maksimum. Namun pada timestamp yang sama, NASA POWER menunjukkan irradiance nol atau rendah. Artinya, data demo yang sedang tersimpan belum cocok untuk disebut sebagai validasi waktu nyata terhadap radiasi matahari. Perbedaan ini muncul karena mode demo project sengaja mempertahankan simulasi panel agar dashboard tetap aktif untuk presentasi.</p><p>Nilai numerik antara NASA irradiance dan Ppanel simulasi tidak harus sama karena satuannya berbeda. NASA memberikan energi radiasi per luas permukaan horizontal, sedangkan project menghitung daya keluaran panel dari model simulasi tegangan dan arus. Oleh karena itu laporan ini membaca kesesuaian tren, bukan error absolut.</p><p>Jika ingin memperoleh validasi yang lebih kuat, data SCC perlu direkam pada jam siang lokal, misalnya pukul 08:00-15:00 WIB, atau demo mode perlu dimatikan agar logika siang/malam benar-benar menahan produksi panel pada malam hari.</p><h2>Keterbatasan</h2><ul><li>Data NASA yang dipakai adalah baseline historis 2025 karena data irradiance NASA untuk tanggal demo 2026 masih bernilai <code>-999</code> atau belum tersedia.</li><li>Simulasi project memakai tutupan awan BMKG dan logika siang/malam, tetapi pada saat laporan dibuat mode demo aktif sehingga pengaruh malam hari tidak dipakai secara ketat.</li><li>Perbandingan ini adalah plausibility check. Untuk validasi hardware penuh tetap diperlukan pengukuran real Vpv, Ipv, irradiance, suhu panel, dan orientasi panel.</li></ul><h2>Kesimpulan</h2><p>Perbandingan dengan NASA POWER menunjukkan bahwa data demo project belum valid sebagai pembacaan waktu nyata karena daya panel simulasi masih muncul pada jam ketika irradiance referensi rendah atau nol. Namun, hasil ini tetap berguna untuk laporan UAS karena menunjukkan batasan simulasi secara transparan. Project layak dipakai sebagai demonstrasi hubungan cuaca, potensi panel, fuzzy charging, dan manajemen beban DC, dengan catatan bahwa validasi lapangan tetap memerlukan data siang hari atau sensor irradiance real.</p><h2>Sumber Data</h2><ol><li>NASA POWER Hourly API: https://power.larc.nasa.gov/docs/services/api/temporal/hourly/</li><li>NASA POWER Solar FAQ: https://power.larc.nasa.gov/docs/faqs/solar/</li><li>NASA POWER Methodology CERES SYN1deg: https://power.larc.nasa.gov/docs/methodology/energy-fluxes/syn1deg/</li></ol></body></html>

@@ -394,16 +394,7 @@ class SccDashboard extends Component
             ];
         }
 
-        $load = $latest->load_status
-            ? [
-                'load_name' => $latest->load_name,
-                'load_status' => $latest->load_status,
-                'load_power' => $latest->load_power,
-                'load_current' => $latest->load_current,
-                'net_power' => $latest->net_power,
-                'load_reason' => $latest->load_reason,
-            ]
-            : app(LoadManagementController::class)->evaluate($latest->toArray());
+        $load = app(LoadManagementController::class)->evaluate($latest->toArray());
 
         $netPower = $load['net_power'];
         $status = $load['load_status'];
@@ -463,7 +454,7 @@ class SccDashboard extends Component
         }
 
         if ($latest->fase === 'Standby') {
-            return 'Panel belum cukup kuat untuk charging, sehingga fuzzy rule-based dengan output duty cycle diskrit menahan PWM di 0%.';
+            return 'Panel belum cukup kuat untuk charging, sehingga lapisan proteksi menahan PWM di 0%.';
         }
 
         if ($latest->fase === 'Float') {
@@ -498,7 +489,7 @@ class SccDashboard extends Component
             'strong' => "{$weather} mendukung potensi panel lebih tinggi. Fuzzy membaca fase {$latest->fase} dan memilih duty cycle {$duty}% sesuai kebutuhan baterai.",
             'reduced' => "{$weather} membuat daya panel cenderung turun. Fuzzy membaca fase {$latest->fase}, lalu menyesuaikan duty cycle {$duty}% agar charging tetap terkendali.",
             'weak' => "{$weather} dapat melemahkan charging. Fuzzy membaca fase {$latest->fase} dan membatasi duty cycle {$duty}% sesuai kemampuan panel.",
-            default => "{$weather} menjadi konteks simulasi panel. Fuzzy membaca fase {$latest->fase} dan memilih duty cycle {$duty}% dari rule diskrit.",
+            default => "{$weather} menjadi konteks simulasi panel. Fuzzy Mamdani membaca error dan delta error, lalu menghasilkan duty cycle {$duty}% melalui centroid.",
         };
     }
 

@@ -28,7 +28,7 @@ class SccDataApiTest extends TestCase
         $response->assertCreated()
             ->assertJsonPath('data.fase', 'Bulk')
             ->assertJsonPath('data.label_e', 'PB')
-            ->assertJsonPath('data.load_name', 'Lampu DC')
+            ->assertJsonPath('data.load_name', 'Lampu DC, Kipas DC')
             ->assertJsonPath('data.load_status', 'LIMITED');
 
         $this->assertGreaterThan(65.0, $response->json('data.duty_cycle'));

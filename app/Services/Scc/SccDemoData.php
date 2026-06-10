@@ -10,8 +10,7 @@ class SccDemoData
     public function __construct(
         private readonly FuzzyChargeController $controller,
         private readonly LoadManagementController $loadController,
-    ) {
-    }
+    ) {}
 
     public function reset(int $records = 144): int
     {
@@ -38,16 +37,29 @@ class SccDemoData
             $evaluated = $this->controller->evaluate($payload, $previousError);
             $target = $this->targetForPhase($evaluated['fase'], $evaluated['vbat']);
             $previousError = $target - $evaluated['vbat'];
+            $load = $this->loadController->evaluate($evaluated);
 
             $rows[] = [
                 ...$evaluated,
-                ...$this->loadController->evaluate($evaluated),
+                ...$this->persistentLoadData($load),
                 'created_at' => $createdAt,
                 'updated_at' => $createdAt,
             ];
         }
 
         return $rows;
+    }
+
+    private function persistentLoadData(array $load): array
+    {
+        return [
+            'load_name' => $load['load_name'],
+            'load_status' => $load['load_status'],
+            'load_power' => $load['load_power'],
+            'load_current' => $load['load_current'],
+            'net_power' => $load['net_power'],
+            'load_reason' => $load['load_reason'],
+        ];
     }
 
     private function payloadForStep(int $index, int $records): array

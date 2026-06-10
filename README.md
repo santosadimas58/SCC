@@ -7,8 +7,8 @@ Project ini dibuat untuk kebutuhan demo/presentasi akademik pada topik elektroni
 ## Fitur Utama
 
 - Dashboard monitoring SCC dengan status online/offline, ringkasan harian, metrik real-time, grafik Vbat, dan grafik SoC.
-- Pengendali fuzzy logic Mamdani untuk menentukan fase charging dan duty cycle PWM dari payload sensor.
-- Halaman membership function untuk menjelaskan input error, delta error, dan output duty cycle.
+- Pengendali fuzzy logic Mamdani untuk menentukan duty cycle PWM dari error dan delta error.
+- Fuzzifikasi menggunakan membership function overlap, inferensi min-max pada 25 aturan, dan defuzzifikasi centroid.
 - Halaman rule base berisi 25 aturan fuzzy.
 - Histori data dengan pencarian, filter fase, filter tanggal, sorting, pagination, dan export CSV.
 - Halaman About dengan diagram arsitektur sistem.
@@ -32,10 +32,10 @@ Project ini dibuat untuk kebutuhan demo/presentasi akademik pada topik elektroni
 Alur sistem:
 
 ```text
-Panel Surya -> Buck Converter -> Baterai -> ESP32 + Fuzzy Logic -> Laravel API -> Database -> Dashboard
+Simulasi Panel/Baterai -> Laravel API + Fuzzy Mamdani -> Database -> Dashboard
 ```
 
-ESP32 atau simulator mengirim data sensor ke endpoint API. Backend Laravel memvalidasi token, menghitung fase charging dan duty cycle fuzzy, menyimpan data ke database, lalu Livewire menampilkan data tersebut pada dashboard, histori, analisis fuzzy, dan export.
+Simulator mengirim data sensor ke endpoint API. Backend Laravel memvalidasi token, menentukan fase charging, menjalankan inferensi Mamdani, menyimpan data, lalu Livewire menampilkan hasilnya pada dashboard, histori, analisis fuzzy, dan export. Project ini merupakan simulasi software dan tidak mengendalikan hardware fisik.
 
 ## Akun Demo
 

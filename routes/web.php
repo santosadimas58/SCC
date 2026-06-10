@@ -8,6 +8,7 @@ use App\Livewire\Pages\SccRules;
 use App\Livewire\Pages\SccExport;
 use App\Livewire\Pages\SccAbout;
 use App\Livewire\Pages\SccAnalysis;
+use App\Livewire\Pages\SccLoadManagement;
 
 Route::get('/', Login::class)->name('login');
 
@@ -22,6 +23,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/scc/fuzzy',   SccFuzzy::class)->name('scc.fuzzy');
     Route::get('/scc/rules',   SccRules::class)->name('scc.rules');
     Route::get('/scc/analysis', SccAnalysis::class)->name('scc.analysis');
+    Route::get('/scc/load', SccLoadManagement::class)->name('scc.load');
     Route::get('/scc/export',  SccExport::class)->name('scc.export');
     Route::get('/scc/about',   SccAbout::class)->name('scc.about');
 });
